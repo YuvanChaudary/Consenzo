@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: consenzo-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - USE_LOCAL_DB=true
+      - LLM_PROVIDER=nvidia
+      - LLM_MODEL=nvidia/nemotron-3.5-lightning-30b-a3b
+      - LLM_BASE_URL=https://integrate.api.nvidia.com/v1
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-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}
+      - JWT_SECRET=${JWT_SECRET:-consenzo-development-secret-jwt-key-32-chars-minimum}
+    networks:
+      - consenzo-net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: consenzo-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - consenzo-net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+networks:
+  consenzo-net:
+    driver: bridge

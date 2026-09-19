@@ -1,0 +1,32 @@
+version = 0.1
+
+[default]
+[default.global.parameters]
+stack_name = "consenzo-core-dev"
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.validate.parameters]
+lint = true
+
+[default.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = false
+resolve_s3 = true
+s3_prefix = "consenzo-core-dev"
+region = "us-east-1"
+parameter_overrides = "Stage=\"dev\" LLMProvider=\"nvidia\" LLMModel=\"nvidia/nemotron-3.5-lightning-30b-a3b\" LLMBaseUrl=\"https://integrate.api.nvidia.com/v1\""
+
+[default.package.parameters]
+resolve_s3 = true
+
+[default.sync.parameters]
+watch = true
+
+[default.local_start_api.parameters]
+warm_containers = "EAGER"
+
+[default.local_start_lambda.parameters]
+warm_containers = "EAGER"

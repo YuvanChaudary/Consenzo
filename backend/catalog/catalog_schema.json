@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Smart TV Catalog Schema",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "asin",
+      "modelName",
+      "brand",
+      "priceInr",
+      "screenSizeInches",
+      "panelType",
+      "refreshRateHz",
+      "resolution",
+      "hasHdmi21",
+      "bezelColor",
+      "widthCm",
+      "heightCm",
+      "depthCm",
+      "warrantyYears",
+      "energyRating",
+      "os"
+    ],
+    "properties": {
+      "asin": { "type": "string", "pattern": "^B[0-9A-Z]{9}$" },
+      "modelName": { "type": "string" },
+      "brand": { "type": "string" },
+      "priceInr": { "type": "number", "minimum": 0 },
+      "screenSizeInches": { "type": "number", "minimum": 0 },
+      "panelType": { "enum": ["OLED", "QLED", "LED", "MiniLED"] },
+      "refreshRateHz": { "type": "number", "minimum": 0 },
+      "resolution": { "enum": ["4K", "8K", "FullHD"] },
+      "hasHdmi21": { "type": "boolean" },
+      "bezelColor": { "type": "string" },
+      "widthCm": { "type": "number", "minimum": 0 },
+      "heightCm": { "type": "number", "minimum": 0 },
+      "depthCm": { "type": "number", "minimum": 0 },
+      "warrantyYears": { "type": "number", "minimum": 0 },
+      "energyRating": { "type": "string" },
+      "os": { "type": "string" }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "consenzo",
+  "private": true,
+  "description": "Consenzo - Group Purchasing Consensus Engine",
+  "workspaces": [
+    "backend",
+    "frontend",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "npm --prefix backend run build && node scripts/dev.js",
+    "dev:backend": "npm --prefix backend run build && node --env-file=backend/.env.local backend/dist/backend/src/localServer.js",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "deploy:aws": "scripts\\deploy-aws.bat",
+    "verify": "node scripts/verify-all.js",
+    "typecheck": "npm --prefix backend run build && npm --prefix frontend run build",
+    "test": "npm --prefix backend test && npm --prefix frontend test"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.163",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}

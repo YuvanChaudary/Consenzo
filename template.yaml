@@ -1,0 +1,200 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Consenzo - Group Purchasing Consensus Engine
+  Serverless production infrastructure connecting React 18 SPA to API Gateway,
+  monolithic Lambda router, single-table DynamoDB, Secrets Manager, and NVIDIA Nemotron inference.
+
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+    Description: Deployment stage environment (e.g. dev, prod)
+  LLMProvider:
+    Type: String
+    Default: nvidia
+    AllowedValues:
+      - nvidia
+      - bedrock
+      - mock
+    Description: Active LLM provider
+  LLMModel:
+    Type: String
+    Default: nvidia/nemotron-3.5-lightning-30b-a3b
+    Description: Active LLM model ID
+  LLMBaseUrl:
+    Type: String
+    Default: https://integrate.api.nvidia.com/v1
+    Description: NVIDIA OpenAI-compatible inference base URL
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Architectures:
+      - x86_64
+
+Resources:
+  # ==============================================================================
+  # 1. DynamoDB: Single-Table Architecture for Sessions, Rosters & Decisions
+  # ==============================================================================
+  ConsenzoCoreTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "consenzo-core-${Stage}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+        - AttributeName: GSI1_PK
+          AttributeType: S
+        - AttributeName: GSI1_SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: GSI1_PK
+              KeyType: HASH
+            - AttributeName: GSI1_SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      SSESpecification:
+        SSEEnabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  # ==============================================================================
+  # 2. Amazon API Gateway HTTP API with Production CORS Enforcement
+  # ==============================================================================
+  ConsenzoHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: !Ref Stage
+      CorsConfiguration:
+        AllowOrigins:
+          - '*'
+        AllowHeaders:
+          - Content-Type
+          - Authorization
+          - X-Correlation-Id
+          - Idempotency-Key
+          - X-Amz-Date
+          - X-Api-Key
+          - X-Amz-Security-Token
+        AllowMethods:
+          - GET
+          - POST
+          - OPTIONS
+        MaxAge: 600
+
+  # ==============================================================================
+  # 3. AWS Lambda Monolithic Backend Router
+  # ==============================================================================
+  ConsenzoBackendFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "consenzo-backend-handler-${Stage}"
+      CodeUri: ./backend/
+      Handler: dist/backend/src/index.handler
+      Runtime: nodejs20.x
+      Environment:
+        Variables:
+          NODE_ENV: production
+          DYNAMODB_TABLE_NAME: !Ref ConsenzoCoreTable
+          LLM_PROVIDER: !Ref LLMProvider
+          LLM_MODEL: !Ref LLMModel
+          LLM_BASE_URL: !Ref LLMBaseUrl
+          JWT_SECRET: "consenzo-production-secure-jwt-secret-key-32-chars-min"
+          NVIDIA_API_KEY_SECRET_ARN: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:consenzo/nvidia-api-key"
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ConsenzoCoreTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:consenzo/nvidia-api-key*"
+      Events:
+        ProxyApiRoot:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ConsenzoHttpApi
+            Path: /
+            Method: ANY
+        ProxyApiGreedy:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ConsenzoHttpApi
+            Path: /{proxy+}
+            Method: ANY
+
+  # ==============================================================================
+  # 4. Amazon S3 Static Website Hosting for React 18 SPA
+  # ==============================================================================
+  ConsenzoFrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "consenzo-frontend-${Stage}-${AWS::AccountId}"
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+
+  ConsenzoFrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ConsenzoFrontendBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub "arn:aws:s3:::${ConsenzoFrontendBucket}/*"
+
+Outputs:
+  ApiEndpoint:
+    Description: Production HTTP API Gateway URL for Frontend configuration
+    Value: !Sub "https://${ConsenzoHttpApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}"
+    Export:
+      Name: !Sub "${AWS::StackName}-ApiEndpoint"
+
+  FrontendWebsiteUrl:
+    Description: S3 Static Website Hosting URL for Consenzo Frontend
+    Value: !GetAtt ConsenzoFrontendBucket.WebsiteURL
+    Export:
+      Name: !Sub "${AWS::StackName}-FrontendUrl"
+
+  FrontendBucketName:
+    Description: S3 Bucket Name for Frontend Deployment
+    Value: !Ref ConsenzoFrontendBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-FrontendBucket"
+
+  DynamoDBTableName:
+    Description: DynamoDB Single-Table name
+    Value: !Ref ConsenzoCoreTable
+    Export:
+      Name: !Sub "${AWS::StackName}-DynamoDBTable"
+
+  LambdaFunctionArn:
+    Description: Monolithic Backend Lambda ARN
+    Value: !GetAtt ConsenzoBackendFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-LambdaArn"
