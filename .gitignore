@@ -15,6 +15,7 @@ out/
 .next/
 .nuxt/
 .cache/
+*.zip
 
 # AWS SAM & CloudFormation
 .aws-sam/

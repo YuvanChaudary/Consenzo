@@ -16,7 +16,7 @@ services:
       - LLM_PROVIDER=nvidia
       - LLM_MODEL=nvidia/nemotron-3.5-lightning-30b-a3b
       - LLM_BASE_URL=https://integrate.api.nvidia.com/v1
-      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-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}
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY}
       - JWT_SECRET=${JWT_SECRET:-consenzo-development-secret-jwt-key-32-chars-minimum}
     networks:
       - consenzo-net
