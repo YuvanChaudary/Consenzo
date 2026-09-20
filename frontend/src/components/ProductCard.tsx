@@ -30,15 +30,29 @@ function getBadgeStyle(badge: string) {
 
 // ─── Image with fallback ──────────────────────────────────────────────────────
 interface ProductImageProps {
-  src: string;
+  src?: string;
+  productId?: string;
   alt: string;
   height: number;
 }
 
-function ProductImage({ src, alt, height }: ProductImageProps) {
+function ProductImage({ src, productId, alt, height }: ProductImageProps) {
+  const [imgSrc, setImgSrc] = useState<string>(
+    src || (productId ? `https://images-na.ssl-images-amazon.com/images/P/${productId}.01._SX400_.jpg` : '')
+  );
+  const [triedFallback, setTriedFallback] = useState(false);
   const [errored, setErrored] = useState(false);
 
-  if (errored) {
+  const handleError = () => {
+    if (!triedFallback && productId && imgSrc !== `https://images-na.ssl-images-amazon.com/images/P/${productId}.01._SX400_.jpg`) {
+      setTriedFallback(true);
+      setImgSrc(`https://images-na.ssl-images-amazon.com/images/P/${productId}.01._SX400_.jpg`);
+    } else {
+      setErrored(true);
+    }
+  };
+
+  if (errored || !imgSrc) {
     return (
       <div
         style={{
@@ -50,7 +64,7 @@ function ProductImage({ src, alt, height }: ProductImageProps) {
           justifyContent: 'center',
           flexDirection: 'column',
           gap: '0.5rem',
-          color: 'rgba(255,255,255,0.3)',
+          color: 'rgba(255,255,255,0.4)',
           fontSize: '0.75rem',
           fontFamily: 'Inter, sans-serif',
           textAlign: 'center',
@@ -58,25 +72,38 @@ function ProductImage({ src, alt, height }: ProductImageProps) {
         }}
       >
         <AlertCircle size={24} strokeWidth={1.5} />
-        <span>{alt}</span>
+        <span style={{ maxWidth: '80%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{alt}</span>
       </div>
     );
   }
 
   return (
-    <img
-      src={src}
-      alt={alt}
-      loading="lazy"
-      onError={() => setErrored(true)}
+    <div
       style={{
         width: '100%',
         height,
-        objectFit: 'cover',
-        display: 'block',
-        transition: 'transform 0.4s ease',
+        background: '#ffffff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '0.75rem',
+        overflow: 'hidden',
       }}
-    />
+    >
+      <img
+        src={imgSrc}
+        alt={alt}
+        loading="lazy"
+        onError={handleError}
+        style={{
+          maxWidth: '100%',
+          maxHeight: '100%',
+          objectFit: 'contain',
+          display: 'block',
+          transition: 'transform 0.4s ease',
+        }}
+      />
+    </div>
   );
 }
 
@@ -160,6 +187,7 @@ export function ProductCard({
           <div style={{ position: 'relative', overflow: 'hidden' }}>
             <ProductImage
               src={product.images[0]}
+              productId={product.id}
               alt={product.name}
               height={imageHeight}
             />

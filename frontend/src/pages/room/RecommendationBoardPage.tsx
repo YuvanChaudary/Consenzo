@@ -26,7 +26,12 @@ function productImage(p: any): string {
   if (p.imageUrl) return p.imageUrl;
   if (Array.isArray(p.images) && p.images[0]) return p.images[0];
   const local = MOCK_PRODUCTS.find(m => m.id === (p.asin || p.id));
-  return local?.images[0] || '';
+  if (local?.images[0]) return local.images[0];
+  const asin = p.asin || p.id;
+  if (asin && typeof asin === 'string' && asin.startsWith('B0')) {
+    return `https://images-na.ssl-images-amazon.com/images/P/${asin}.01._SX400_.jpg`;
+  }
+  return '';
 }
 
 function productName(p: any): string {
