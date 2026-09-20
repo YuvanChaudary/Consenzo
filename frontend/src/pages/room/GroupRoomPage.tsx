@@ -10,6 +10,7 @@ import {
   LogIn,
 } from 'lucide-react';
 import { api, getTokenPayload } from '@/services/api';
+import { copyToClipboard } from '@/lib/utils';
 
 // ─── WhatsApp Dark palette ────────────────────────────────────────────────────
 const WA = {
@@ -135,8 +136,9 @@ export function GroupRoomPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [events.length, group?.roster.length]);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(`${window.location.origin}/join/${roomId}`);
+  const handleCopy = async () => {
+    const inviteLink = `${window.location.origin}/join/${roomId}`;
+    await copyToClipboard(inviteLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

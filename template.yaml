@@ -111,6 +111,7 @@ Resources:
         AllowMethods:
           - GET
           - POST
+          - PUT
           - OPTIONS
         MaxAge: 600
 

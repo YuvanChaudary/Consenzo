@@ -65,3 +65,43 @@ export function slugify(str: string): string {
 export function truncate(str: string, max: number): string {
   return str.length > max ? str.slice(0, max - 3) + '...' : str;
 }
+
+export async function copyToClipboard(text: string): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+
+  // 1. Try modern clipboard API if available in secure context
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // fallback below
+    }
+  }
+
+  // 2. Fallback: temporary hidden textarea with document.execCommand('copy')
+  try {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-999999px';
+    textarea.style.top = '-999999px';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    if (successful) return true;
+  } catch {
+    // ignore
+  }
+
+  // 3. Fallback prompt if all else fails
+  try {
+    window.prompt('Copy to clipboard:', text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+

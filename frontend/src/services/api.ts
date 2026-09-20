@@ -689,7 +689,7 @@ export const api = {
     }
 
     return request(`/participants/${participantId}/preferences`, {
-      method: 'PUT',
+      method: 'POST',
       body: JSON.stringify(data),
     });
   },

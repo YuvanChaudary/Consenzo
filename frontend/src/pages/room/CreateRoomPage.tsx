@@ -13,6 +13,7 @@ import {
 import { GlassPanel } from '@/components/ui/GlassPanel';
 import { useAuthStore } from '@/store/useAuthStore';
 import { api } from '@/services/api';
+import { copyToClipboard } from '@/lib/utils';
 
 const CATEGORIES = [
   { id: 'smart_tvs', name: 'Smart TVs', icon: Tv2, desc: 'OLED, 4K UHD, Gaming Displays' },
@@ -78,9 +79,9 @@ export function CreateRoomPage() {
     }
   };
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (!createdRoom) return;
-    navigator.clipboard.writeText(createdRoom.inviteUrl);
+    await copyToClipboard(createdRoom.inviteUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
