@@ -138,6 +138,16 @@ export class GroupRepository {
     });
   }
 
+  public async updateParticipantStatus(groupId: string, participantId: string, status: string): Promise<void> {
+    await ddbDocClient.send(new UpdateCommand({
+      TableName: DYNAMODB_TABLE,
+      Key: { PK: `SESSION#${groupId}`, SK: `PART#${participantId}` },
+      UpdateExpression: 'SET #status = :s',
+      ExpressionAttributeNames: { '#status': 'status' },
+      ExpressionAttributeValues: { ':s': status },
+    }));
+  }
+
   public async updateGroupStatus(groupId: string, status: string): Promise<void> {
     await ddbDocClient.send(new UpdateCommand({
       TableName: DYNAMODB_TABLE,

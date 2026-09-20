@@ -1,0 +1,90 @@
+{
+  "categoryId": "smart_tvs",
+  "displayName": "Smart TVs",
+  "description": "4K, OLED, QLED and Mini-LED Smart Televisions and Displays",
+  "icon": "Tv2",
+  "specDefinitions": [
+    {
+      "key": "priceInr",
+      "label": "Price (INR)",
+      "type": "currency",
+      "unit": "INR",
+      "min": 10000,
+      "max": 300000,
+      "filterable": true,
+      "sortable": true,
+      "displayGroup": "Pricing",
+      "weight": 1.0,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "screenSizeInches",
+      "label": "Screen Size",
+      "type": "numeric",
+      "unit": "inches",
+      "min": 32,
+      "max": 85,
+      "filterable": true,
+      "sortable": true,
+      "displayGroup": "Display",
+      "weight": 0.85,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "panelType",
+      "label": "Panel Type",
+      "type": "categorical",
+      "options": ["OLED", "QLED", "MiniLED", "LED"],
+      "filterable": true,
+      "sortable": false,
+      "displayGroup": "Display",
+      "weight": 0.8,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "refreshRateHz",
+      "label": "Refresh Rate",
+      "type": "numeric",
+      "unit": "Hz",
+      "min": 60,
+      "max": 144,
+      "filterable": true,
+      "sortable": true,
+      "displayGroup": "Gaming & Motion",
+      "weight": 0.75,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "resolution",
+      "label": "Resolution",
+      "type": "categorical",
+      "options": ["4K", "8K", "FullHD"],
+      "filterable": true,
+      "sortable": false,
+      "displayGroup": "Display",
+      "weight": 0.7,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "hasHdmi21",
+      "label": "HDMI 2.1 Ports",
+      "type": "boolean",
+      "filterable": true,
+      "sortable": false,
+      "displayGroup": "Connectivity",
+      "weight": 0.65,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "os",
+      "label": "Smart Platform / OS",
+      "type": "categorical",
+      "options": ["Google TV", "webOS", "Tizen", "Fire TV", "Android TV"],
+      "filterable": true,
+      "sortable": false,
+      "displayGroup": "Smart Features",
+      "weight": 0.6,
+      "hardConstraintEligible": false
+    }
+  ]
+}

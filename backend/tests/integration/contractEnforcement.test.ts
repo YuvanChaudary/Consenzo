@@ -30,7 +30,10 @@ describe('Canonical API Contract Enforcement Suite', () => {
       const name = command.constructor.name;
       if (name === 'PutCommand') return Promise.resolve({});
       if (name === 'GetCommand') {
-        if (command.input?.Key?.PK?.startsWith('PARTICIPANT#')) {
+        const pk = command.input?.Key?.PK;
+        const sk = command.input?.Key?.SK || '';
+        // Confirmed profile — group-scoped key (GROUP#<gid>, PREF#<pid>)
+        if (typeof sk === 'string' && sk.startsWith('PREF#')) {
           return Promise.resolve({
             Item: {
               participantId: 'usr_test_contract',
@@ -43,12 +46,25 @@ describe('Canonical API Contract Enforcement Suite', () => {
             }
           });
         }
+        if (typeof sk === 'string' && sk.startsWith('CONV#')) {
+          return Promise.resolve({ Item: undefined });
+        }
+        if (pk === 'SESSION#grp_123') {
+          return Promise.resolve({ Item: undefined });
+        }
+        // Group metadata / analysis lookups
         return Promise.resolve({ Item: { groupId: 'grp_contract_123', title: 'Test Room', status: 'JOINING' } });
       }
       if (name === 'QueryCommand') {
         if (command.input?.IndexName === 'GSI1') {
           return Promise.resolve({ Items: [] });
         }
+        // Conversation history query → empty transcript
+        if (typeof command.input?.ExpressionAttributeValues?.[':sk'] === 'string'
+          && command.input.ExpressionAttributeValues[':sk'].includes('#MSG#')) {
+          return Promise.resolve({ Items: [] });
+        }
+        // Group roster query → one member
         return Promise.resolve({ Items: [{ participantId: 'usr_test_contract', displayName: 'TestUser' }] });
       }
       return Promise.resolve({});

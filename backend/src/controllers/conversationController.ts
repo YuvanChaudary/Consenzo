@@ -1,6 +1,7 @@
 import { APIGatewayProxyEvent } from 'aws-lambda';
 import { dialogueEngine } from '../interviewer/dialogueEngine';
 import { groupRepository } from '../repositories/groupRepository';
+import { preferenceRepository } from '../repositories/preferenceRepository';
 import { successResponse } from '../utils/response';
 import { AppError } from '../middleware/error';
 import { requireParticipantAuth } from '../middleware/auth';
@@ -22,36 +23,59 @@ function getInitialMessageForCategory(category: string = 'smart_tvs', title?: st
 }
 
 export const conversationController = {
+  /**
+   * Start (or resume) the private interview for THIS participant in THIS group.
+   * The conversation is scoped to the group: a new room always starts a fresh
+   * chat with the correct category, while returning members get their history.
+   */
   async startConversation(event: APIGatewayProxyEvent): Promise<any> {
     const auth = await requireParticipantAuth(event.headers as any);
 
-    let category = 'smart_tvs';
-    let title = '';
-    try {
-      const group = await groupRepository.getGroupByParticipantId(auth.sub);
-      if (group) {
-        category = group.category || 'smart_tvs';
-        title = group.title || '';
-      }
-    } catch {
-      // fallback
+    const groupId = auth.groupId;
+    if (!groupId) {
+      throw new AppError('NO_GROUP', 400, undefined, 'Your session token is not linked to a group. Join a room first.');
     }
 
-    const initialMsg = getInitialMessageForCategory(category, title);
+    const group = await groupRepository.getGroup(groupId);
+    const category = group?.category || 'smart_tvs';
+    const title = group?.title || '';
+
+    // Resume: if a conversation already exists for (group, participant), return it
+    const existingMessages = await preferenceRepository.getMessages(groupId, auth.sub);
+    const isResume = existingMessages.length > 0;
+
+    if (!isResume) {
+      // Fresh conversation — log it on the group feed (without transcript contents)
+      await preferenceRepository.addGroupEvent(groupId, auth.sub, 'INTERVIEW_STARTED', 'started consulting their shopping assistant');
+    }
+
+    const initialMessage = getInitialMessageForCategory(category, title);
+    const messages = isResume
+      ? existingMessages
+      : [{ role: 'assistant' as const, content: initialMessage, timestamp: new Date().toISOString() }];
 
     return successResponse({
-      conversationId: `conv_${auth.sub}`,
+      conversationId: `conv_${groupId}_${auth.sub}`,
       participantId: auth.sub,
-      turnCount: 1,
+      groupId,
+      turnCount: Math.floor(existingMessages.length / 2) + 1,
       category,
       roomTitle: title,
-      initialMessage: initialMsg,
-      message: initialMsg,
-      thinking: `Initialized adaptive discovery session for category "${category}". Awaiting participant's initial input.`,
-      thinkingSteps: [
+      isResume,
+      messages,
+      initialMessage,
+      message: isResume ? undefined : initialMessage,
+      thinking: isResume
+        ? `Resumed discovery session for category "${category}" with ${existingMessages.length} prior turns.`
+        : `Initialized adaptive discovery session for category "${category}". Awaiting participant's initial input.`,
+      thinkingSteps: isResume ? [
+        `Loaded ${existingMessages.length} prior conversation turns`,
+        `Domain confirmed: ${category.toUpperCase()}`,
+        'Continuing from previous context — nothing is asked twice',
+      ] : [
         `Identified session domain: ${category.toUpperCase()}`,
         'Configured dynamic attribute taxonomy and constraint boundaries',
-        'Ready to parse natural human language and extract group consensus priorities'
+        'Ready to parse natural human language and extract group consensus priorities',
       ],
     }, 200, {
       requestId: event.requestContext.requestId,
@@ -69,10 +93,15 @@ export const conversationController = {
       throw new AppError('MISSING_PARAMS', 400, undefined, 'Message content is required.');
     }
 
-    try {
-      const result = await dialogueEngine.processTurn(auth.sub, message);
+    const groupId = auth.groupId;
+    if (!groupId) {
+      throw new AppError('NO_GROUP', 400, undefined, 'Your session token is not linked to a group. Join a room first.');
+    }
 
-      const constraintsCount = (result.extractedPreferences as any)?.constraints?.length || 2;
+    try {
+      const result = await dialogueEngine.processTurn(groupId, auth.sub, message);
+
+      const constraintsCount = (result.extractedPreferences as any)?.constraints?.length || 0;
 
       return successResponse({
         reply: result.reply,
@@ -84,7 +113,7 @@ export const conversationController = {
         thinkingSteps: result.thinkingSteps || [
           'Interpreted user intent and emotional weighting',
           'Extracted formal numerical and categorical constraints',
-          'Cross-referenced with group consensus compatibility'
+          'Cross-referenced with group consensus compatibility',
         ],
       }, 200, {
         requestId: event.requestContext.requestId,
@@ -94,5 +123,31 @@ export const conversationController = {
     } catch (e: any) {
       throw new AppError('CONVERSATION_ERROR', 500, undefined, e.message);
     }
+  },
+
+  /** GET /conversations/{conversationId} — restore chat history (per group). */
+  async getConversation(event: APIGatewayProxyEvent): Promise<any> {
+    const auth = await requireParticipantAuth(event.headers as any);
+    const groupId = auth.groupId;
+    if (!groupId) {
+      throw new AppError('NO_GROUP', 400, undefined, 'Your session token is not linked to a group.');
+    }
+
+    const messages = await preferenceRepository.getMessages(groupId, auth.sub);
+    const group = await groupRepository.getGroup(groupId);
+
+    return successResponse({
+      conversationId: `conv_${groupId}_${auth.sub}`,
+      participantId: auth.sub,
+      groupId,
+      category: group?.category || 'smart_tvs',
+      roomTitle: group?.title || '',
+      messages,
+      turnCount: Math.floor(messages.length / 2) + 1,
+    }, 200, {
+      requestId: event.requestContext.requestId,
+      correlationId: (event.headers as any)['x-correlation-id'] || 'unknown',
+      timestamp: new Date().toISOString(),
+    });
   },
 };

@@ -1,0 +1,145 @@
+[
+  {
+    "id": "HDP-SNY-XM5",
+    "asin": "HDP-SNY-XM5",
+    "slug": "sony-wh-1000xm5-noise-cancelling-headphones",
+    "name": "Sony WH-1000XM5 Wireless Industry Leading Noise Canceling Headphones",
+    "modelName": "Sony WH-1000XM5",
+    "brand": "Sony",
+    "category": "headphones",
+    "priceInr": 29990,
+    "originalPriceInr": 34990,
+    "rating": 4.7,
+    "reviewCount": 18420,
+    "primeEligible": true,
+    "inStock": true,
+    "badge": "Best Seller",
+    "images": [
+      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80",
+      "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=800&q=80",
+      "https://images.unsplash.com/photo-1484704849700-f032a568e944?w=800&q=80"
+    ],
+    "specs": [
+      { "key": "formFactor", "label": "Form Factor", "value": "Over-Ear", "displayGroup": "Comfort & Design" },
+      { "key": "hasAnc", "label": "Active Noise Cancellation", "value": true, "displayGroup": "Audio Features" },
+      { "key": "batteryHours", "label": "Battery Life", "value": 30, "unit": "hours", "displayGroup": "Battery" },
+      { "key": "hasSpatialAudio", "label": "Spatial Audio", "value": true, "displayGroup": "Audio Features" },
+      { "key": "connectivity", "label": "Connectivity", "value": "Bluetooth 5.3, Multipoint, 3.5mm", "displayGroup": "Connectivity" },
+      { "key": "priceInr", "label": "Price", "value": 29990, "unit": "INR", "displayGroup": "Pricing" }
+    ]
+  },
+  {
+    "id": "HDP-BSE-QC45",
+    "asin": "HDP-BSE-QC45",
+    "slug": "bose-quietcomfort-45-bluetooth-wireless-noise-cancelling",
+    "name": "Bose QuietComfort 45 Bluetooth Wireless Noise Cancelling Headphones",
+    "modelName": "Bose QuietComfort 45",
+    "brand": "Bose",
+    "category": "headphones",
+    "priceInr": 26900,
+    "originalPriceInr": 29900,
+    "rating": 4.6,
+    "reviewCount": 12350,
+    "primeEligible": true,
+    "inStock": true,
+    "badge": "Top Rated",
+    "images": [
+      "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=800&q=80",
+      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80",
+      "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=800&q=80"
+    ],
+    "specs": [
+      { "key": "formFactor", "label": "Form Factor", "value": "Over-Ear", "displayGroup": "Comfort & Design" },
+      { "key": "hasAnc", "label": "Active Noise Cancellation", "value": true, "displayGroup": "Audio Features" },
+      { "key": "batteryHours", "label": "Battery Life", "value": 24, "unit": "hours", "displayGroup": "Battery" },
+      { "key": "hasSpatialAudio", "label": "Spatial Audio", "value": false, "displayGroup": "Audio Features" },
+      { "key": "connectivity", "label": "Connectivity", "value": "Bluetooth 5.2, USB-C", "displayGroup": "Connectivity" },
+      { "key": "priceInr", "label": "Price", "value": 26900, "unit": "INR", "displayGroup": "Pricing" }
+    ]
+  },
+  {
+    "id": "HDP-APL-MAX",
+    "asin": "HDP-APL-MAX",
+    "slug": "apple-airpods-max-space-grey",
+    "name": "Apple AirPods Max Wireless Over-Ear Headphones with Active Noise Cancellation",
+    "modelName": "Apple AirPods Max",
+    "brand": "Apple",
+    "category": "headphones",
+    "priceInr": 59900,
+    "rating": 4.8,
+    "reviewCount": 9820,
+    "primeEligible": true,
+    "inStock": true,
+    "images": [
+      "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=800&q=80",
+      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80",
+      "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=800&q=80"
+    ],
+    "specs": [
+      { "key": "formFactor", "label": "Form Factor", "value": "Over-Ear", "displayGroup": "Comfort & Design" },
+      { "key": "hasAnc", "label": "Active Noise Cancellation", "value": true, "displayGroup": "Audio Features" },
+      { "key": "batteryHours", "label": "Battery Life", "value": 20, "unit": "hours", "displayGroup": "Battery" },
+      { "key": "hasSpatialAudio", "label": "Spatial Audio", "value": true, "displayGroup": "Audio Features" },
+      { "key": "connectivity", "label": "Connectivity", "value": "Bluetooth 5.0", "displayGroup": "Connectivity" },
+      { "key": "priceInr", "label": "Price", "value": 59900, "unit": "INR", "displayGroup": "Pricing" }
+    ]
+  },
+  {
+    "id": "HDP-SNH-M4",
+    "asin": "HDP-SNH-M4",
+    "slug": "sennheiser-momentum-4-wireless-headphones",
+    "name": "Sennheiser Momentum 4 Wireless Audiophile Headphones with 60-Hour Battery",
+    "modelName": "Sennheiser Momentum 4",
+    "brand": "Sennheiser",
+    "category": "headphones",
+    "priceInr": 24990,
+    "originalPriceInr": 34990,
+    "rating": 4.6,
+    "reviewCount": 6120,
+    "primeEligible": true,
+    "inStock": true,
+    "badge": "Deal",
+    "images": [
+      "https://images.unsplash.com/photo-1484704849700-f032a568e944?w=800&q=80",
+      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80",
+      "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=800&q=80"
+    ],
+    "specs": [
+      { "key": "formFactor", "label": "Form Factor", "value": "Over-Ear", "displayGroup": "Comfort & Design" },
+      { "key": "hasAnc", "label": "Active Noise Cancellation", "value": true, "displayGroup": "Audio Features" },
+      { "key": "batteryHours", "label": "Battery Life", "value": 60, "unit": "hours", "displayGroup": "Battery" },
+      { "key": "hasSpatialAudio", "label": "Spatial Audio", "value": false, "displayGroup": "Audio Features" },
+      { "key": "connectivity", "label": "Connectivity", "value": "Bluetooth 5.2, USB-C", "displayGroup": "Connectivity" },
+      { "key": "priceInr", "label": "Price", "value": 24990, "unit": "INR", "displayGroup": "Pricing" }
+    ]
+  },
+  {
+    "id": "HDP-SNY-C700",
+    "asin": "HDP-SNY-C700",
+    "slug": "sony-wh-ch720n-wireless-noise-canceling-headphones",
+    "name": "Sony WH-CH720N Wireless Over-Ear Noise Canceling Headphones",
+    "modelName": "Sony WH-CH720N",
+    "brand": "Sony",
+    "category": "headphones",
+    "priceInr": 9990,
+    "originalPriceInr": 14990,
+    "rating": 4.3,
+    "reviewCount": 8940,
+    "primeEligible": true,
+    "inStock": true,
+    "badge": "Best Value",
+    "images": [
+      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80",
+      "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=800&q=80",
+      "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=800&q=80"
+    ],
+    "specs": [
+      { "key": "formFactor", "label": "Form Factor", "value": "Over-Ear", "displayGroup": "Comfort & Design" },
+      { "key": "hasAnc", "label": "Active Noise Cancellation", "value": true, "displayGroup": "Audio Features" },
+      { "key": "batteryHours", "label": "Battery Life", "value": 35, "unit": "hours", "displayGroup": "Battery" },
+      { "key": "hasSpatialAudio", "label": "Spatial Audio", "value": false, "displayGroup": "Audio Features" },
+      { "key": "connectivity", "label": "Connectivity", "value": "Bluetooth 5.2, USB-C", "displayGroup": "Connectivity" },
+      { "key": "priceInr", "label": "Price", "value": 9990, "unit": "INR", "displayGroup": "Pricing" }
+    ]
+  }
+]

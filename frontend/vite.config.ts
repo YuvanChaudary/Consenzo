@@ -17,6 +17,11 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
-    globals: true
+    globals: true,
+    // Unit tests must run fully offline against the in-memory mock store,
+    // never against the deployed API Gateway backend.
+    env: {
+      VITE_USE_MOCKS: 'true'
+    }
   }
 });

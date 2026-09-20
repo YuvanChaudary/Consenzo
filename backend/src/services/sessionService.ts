@@ -3,6 +3,7 @@ const uuidv4 = randomUUID;
 import { Group, Participant, SessionTokenPayload } from '@shared/types/session';
 import { generateSessionToken } from '../middleware/auth';
 import { groupRepository } from '../repositories/groupRepository';
+import { preferenceRepository } from '../repositories/preferenceRepository';
 
 export interface SessionServiceResult {
   group: Group;
@@ -44,6 +45,8 @@ export class SessionService {
     await groupRepository.saveGroup(group);
     await groupRepository.saveInviteCode(inviteCode, groupId);
     await groupRepository.saveParticipant(groupId, creator);
+    await preferenceRepository.addGroupEvent(groupId, creatorId, 'MEMBER_JOINED',
+      `${creatorDisplayName} created the room and is deciding on ${category === 'laptops' ? 'a laptop' : category === 'soundbars' ? 'a soundbar' : 'a TV'}`);
 
     return { group, participant: creator, token, inviteCode };
   }
@@ -76,6 +79,7 @@ export class SessionService {
     });
 
     await groupRepository.saveParticipant(groupId, participant);
+    await preferenceRepository.addGroupEvent(groupId, participantId, 'MEMBER_JOINED', `${displayName} joined the room`);
 
     const members = await groupRepository.getParticipants(groupId);
     if (members.length >= 2) {

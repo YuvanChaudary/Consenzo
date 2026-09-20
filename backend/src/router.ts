@@ -6,6 +6,10 @@ import { groupController } from './controllers/groupController';
 import { conversationController } from './controllers/conversationController';
 import { preferenceController } from './controllers/preferenceController';
 import { catalogService } from './services/catalogService';
+import { preferenceRepository } from './repositories/preferenceRepository';
+import { catalogHandler } from './handlers/catalogHandler';
+import { cartHandler } from './handlers/cartHandler';
+import { orderHandler } from './handlers/orderHandler';
 
 type Handler = (event: APIGatewayProxyEvent, context: CorrelationContext) => Promise<any>;
 
@@ -19,10 +23,53 @@ const CORS_HEADERS = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Correlation-Id,Idempotency-Key',
-  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+  'Access-Control-Allow-Methods': 'GET,POST,PUT,OPTIONS',
 };
 
 const routes: Route[] = [
+  // ─── API v2 Storefront Endpoints ──────────────────────────────────────────
+  {
+    method: 'GET',
+    path: '/api/v2/products',
+    handler: (event, correlation) => catalogHandler.listProducts(event, correlation),
+  },
+  {
+    method: 'GET',
+    path: '/api/v2/products/{id}',
+    handler: (event, correlation) => catalogHandler.getProduct(event, correlation),
+  },
+  {
+    method: 'GET',
+    path: '/api/v2/categories',
+    handler: (event, correlation) => catalogHandler.listCategories(event, correlation),
+  },
+  {
+    method: 'GET',
+    path: '/api/v2/categories/{category}/schema',
+    handler: (event, correlation) => catalogHandler.getCategorySchema(event, correlation),
+  },
+  {
+    method: 'POST',
+    path: '/api/v2/cart',
+    handler: (event, correlation) => cartHandler.saveCart(event, correlation),
+  },
+  {
+    method: 'GET',
+    path: '/api/v2/cart/{cartId}',
+    handler: (event, correlation) => cartHandler.getCart(event, correlation),
+  },
+  {
+    method: 'POST',
+    path: '/api/v2/orders',
+    handler: (event, correlation) => orderHandler.createOrder(event, correlation),
+  },
+  {
+    method: 'GET',
+    path: '/api/v2/orders/{userId}',
+    handler: (event, correlation) => orderHandler.listOrders(event, correlation),
+  },
+
+  // ─── Legacy & Common Endpoints ─────────────────────────────────────────────
   {
     method: 'GET',
     path: '/catalog',
@@ -72,6 +119,8 @@ const routes: Route[] = [
 
       return successResponse({
         status: 'healthy',
+        platform: 'Shippyfy Full E-Commerce Platform',
+        version: '2.0.0',
         timestamp: new Date().toISOString(),
         database: {
           status: dbStatus,
@@ -130,14 +179,49 @@ const routes: Route[] = [
     handler: (event) => conversationController.startConversation(event),
   },
   {
+    method: 'GET',
+    path: '/conversations/{conversationId}',
+    handler: (event) => conversationController.getConversation(event),
+  },
+  {
     method: 'POST',
     path: '/conversations/{conversationId}/messages',
     handler: (event) => conversationController.sendMessage(event),
   },
   {
     method: 'GET',
+    path: '/groups/{groupId}/events',
+    handler: async (event, correlation) => {
+      const groupId = event.pathParameters?.['groupId'];
+      const sinceParam = event.queryStringParameters?.['since'];
+      const since = sinceParam ? Number(sinceParam) : undefined;
+      const events = await preferenceRepository.getGroupEvents(groupId || '', since);
+      return successResponse({ groupId, events }, 200, {
+        requestId: correlation.requestId,
+        correlationId: correlation.correlationId,
+        timestamp: new Date().toISOString(),
+      });
+    },
+  },
+  {
+    method: 'GET',
+    path: '/groups/{groupId}/analysis',
+    handler: (event) => groupController.getAnalysis(event),
+  },
+  {
+    method: 'GET',
     path: '/participants/{participantId}/preferences',
     handler: (event) => preferenceController.getPreferences(event),
+  },
+  {
+    method: 'PUT',
+    path: '/participants/{participantId}/preferences',
+    handler: (event) => preferenceController.updatePreferences(event),
+  },
+  {
+    method: 'POST',
+    path: '/participants/{participantId}/preferences',
+    handler: (event) => preferenceController.updatePreferences(event),
   },
   {
     method: 'POST',

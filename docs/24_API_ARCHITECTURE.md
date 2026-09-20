@@ -45,6 +45,15 @@ All non-2xx responses adhere to an immutable error contract:
 
 ---
 
+> **Note (current engine behavior)**: over-constrained groups no longer receive an error envelope.
+> The deterministic engine now completes every analysis via the **Nearest-Feasible Proximity fallback**
+> (see `docs/33_CONSTRAINT_ENGINE.md` §7): the top 15 statistically-closest real products are returned
+> with `proximity.mode = "NEAREST"`, per-violation gap audits, and a market availability census.
+> The `MUTUALLY_EXCLUSIVE_CONSTRAINTS` envelope below remains reserved for future interactive
+> relaxation flows and for clients that explicitly opt into strict mode.
+
+---
+
 ## 3. Authoritative Endpoint Specification
 
 ### 3.1 Groups & Sessions
@@ -116,7 +125,7 @@ The backend isolates the foundational model via a clean provider interface:
 └──────────────────┘    └──────────────────┘    └──────────────────┘
 ```
 
-The system defaults to `NvidiaLLMProvider` targeting `nvidia/llama-3.3-nemotron-super-49b-v1.5` at `https://integrate.api.nvidia.com/v1`. Authentication uses `NVIDIA_API_KEY` stored securely in AWS Secrets Manager. `LocalOllamaProvider` enables zero-cost, offline development without cloud credentials, and `BedrockProvider` remains supported for future multi-provider expansion.
+The system defaults to `NvidiaLLMProvider` targeting `nvidia/nemotron-3.5-lightning-30b-a3b` at `https://integrate.api.nvidia.com/v1`. Authentication uses an NVIDIA API key stored securely in AWS Secrets Manager (`consenzo/nvidia-api-key`, resolved via `NVIDIA_API_KEY_SECRET_ARN`). `MockLLMProvider` enables zero-cost, fully offline development and testing (`LLM_PROVIDER=mock`), and `BedrockProvider` remains supported for future multi-provider expansion. The implemented provider set is authoritative in `backend/src/services/llm/providerFactory.ts`: `nvidia | anthropic | bedrock | mock`.
 
 ---
 
@@ -126,8 +135,8 @@ The system defaults to `NvidiaLLMProvider` targeting `nvidia/llama-3.3-nemotron-
    - If the NVIDIA hosted API returns an error (e.g. `HTTP 429` or `504 Gateway Timeout`), the backend executes 1 retry with exponential backoff. If still unrecovered, it returns `HTTP 503` with an empathetic conversational retry request. **The system never fabricates or hallucinates preferences on failure.**
 2. **Ambiguous Extraction**:
    - If an extracted preference has confidence below 0.70, it is flagged as uncertain, and the agent asks a targeted clarification question.
-3. **Empty Result Set (Over-Constrained Catalog)**:
-   - If the deterministic engine finds 0 products satisfying all hard constraints, it flags a `GROUP_CONFLICT` and executes **Relaxation Branching**, returning the closest compromises with explicit conflict banners.
+3. **Empty Result Set (Over-Constrained Catalog) — Nearest-Feasible Fallback**:
+   - If the deterministic engine finds 0 products satisfying all hard constraints, it **does not fail and does not return an arbitrary slice of the catalog**. The Proximity Engine (`src/engine/proximityEngine.ts`) ranks the entire catalog by graduated attribute proximity (robust median/MAD z-scores for numeric attributes, ordinal tier ladders for categoricals, market-segment adjacency for brands) and returns the top 15 nearest real products with `proximity.mode = "NEAREST"`, `matchQuality` labels, per-violation gap audits naming the closest market value, and a per-attribute availability census. Dealbreakers are never marked satisfied; proximity utilities feed the frozen ADR-006 fairness operator unchanged.
 4. **Deterministic Engine Failure**:
    - If mathematical evaluation fails, an explicit `HTTP 500 ENGINE_ERROR` is returned. **The AI is strictly prohibited from guessing or generating a recommendation fallback.**
 5. **DynamoDB Failure**:

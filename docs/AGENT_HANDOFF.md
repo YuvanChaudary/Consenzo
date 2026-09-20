@@ -36,12 +36,24 @@ The deterministic decision pipeline, frontend SPA, API contracts, adversarial te
 - **Preflight**: API Gateway Lambda router handles HTTP `OPTIONS` returning 200 with standard CORS headers (`*`, `GET,POST,PUT,DELETE,OPTIONS`).
 - **Catalog Resolution**: Dynamic multi-path lookup ensures robust catalog resolution across local development, jest environments, and AWS Lambda bundles.
 
-### Verification Status
-- Frontend tests: 8/8 PASS
-- Backend tests: 61/61 PASS (17 test suites, including Hostile Benchmarks A–H and Contract Enforcement)
-- Frontend build: PASS
+### Verification Status (Re-verified this session)
+- Backend tests: 66/66 PASS (18 test suites, including Hostile Benchmarks A–H and Contract Enforcement)
 - Backend build: PASS
-- Typecheck: PASS
-- NVIDIA Live Smoke Test: PASS (1169ms)
-- SAM Template Validation: PASS
-- AWS Cloud Live Deployment: `NOT LIVE VERIFIED` (Local AWS CLI SSO session token expired; live deployment blocked until user re-authenticates via `aws sso login`).end.
+- Frontend build: PASS
+- Frontend tests: 8/8 PASS — **FIXED this session**: `vite.config.ts` now sets `VITE_USE_MOCKS=true` for the vitest environment; previously the suite silently hit the deployed API Gateway endpoint (live network calls in unit tests, 6/8 failing).
+- **FIXED this session**: `backend/src/config/env.ts` now allows `LLM_PROVIDER=anthropic` (previously zod validation crashed at cold start even though `AnthropicLLMProvider` exists in `providerFactory.ts`).
+- **FIXED this session**: `template.yaml` no longer hardcodes a production `JWT_SECRET`; it is now a `NoEcho` parameter wired via `samconfig.toml` to Secrets Manager (`consenzo/jwt-secret`).
+- Typecheck: PASS (backend `tsc` + frontend `tsc` via build)
+- NVIDIA Live Smoke Test: PASS (1169ms, at time of original verification)
+- SAM Template Validation: PASS (at time of original verification)
+- AWS Cloud Live Deployment: `NOT LIVE VERIFIED` (Local AWS CLI SSO session token expired; live deployment blocked until user re-authenticates via `aws sso login`).
+
+### Session Addendum — Nearest-Feasible Proximity Engine & Deploy Hardening (latest)
+
+- [x] **Nearest-Feasible Recommendation Engine (new capability)**:
+    - Zero-match analyses no longer dead-end: when strict gating yields an empty feasible set, `src/engine/proximityEngine.ts` + `src/engine/fitStats.ts` rank the **entire catalog** by statistically-grounded attribute proximity (robust median/MAD z-scores, tier extrapolation, ordinal ladders, market-segment adjacency) and return the top 15 nearest real products with `matchQuality`, violation gap audits, and an availability census. Frozen fairness math (ADR-006) untouched; deterministic/LLM boundary preserved.
+    - New unit suite `backend/tests/unit/proximityEngine.test.ts`: 21/21 pass (adversarial zero-match scenarios, determinism, monotonicity, utility bounds).
+- [x] **Verified totals this session**: backend 87/87 tests (19 suites) PASS, backend build PASS, frontend build PASS, frontend tests 8/8 PASS.
+- [x] **Run-path fixes**: `scripts/dev.js` no longer requires `backend/.env.local` (offline defaults: mock LLM + in-memory DB) and wires the frontend to `http://localhost:3001`; `npm run dev` verified end-to-end (health 200, group create, analysis COMPLETED).
+- [x] **Template fixes**: `LLMProvider.AllowedValues` now includes `anthropic`; new `AnthropicApiKey` (NoEcho) parameter wired to Lambda env `ANTHROPIC_API_KEY`.
+- [x] **New documentation**: `docs/98_AWS_DEPLOYMENT_GUIDE.md` — full cloud-developer runbook (prereqs, IAM, secrets, SAM deploy, frontend publish, rotation, rollback, teardown, troubleshooting, hardening backlog).

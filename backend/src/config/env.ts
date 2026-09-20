@@ -1,9 +1,11 @@
 import { z } from 'zod';
 
 const envSchema = z.object({
-  LLM_PROVIDER: z.enum(['nvidia', 'bedrock', 'mock']).default('nvidia'),
-  LLM_MODEL: z.string().default('nvidia/nemotron-3.5-lightning-30b-a3b'),
-  LLM_BASE_URL: z.string().url().default('https://integrate.api.nvidia.com/v1'),
+  // Must stay in sync with LLMProviderFactory in services/llm/providerFactory.ts
+  LLM_PROVIDER: z.enum(['openrouter', 'nvidia', 'anthropic', 'bedrock', 'mock']).default('openrouter'),
+  LLM_MODEL: z.string().default('nvidia/nemotron-3.5-lightning:free'),
+  LLM_BASE_URL: z.string().url().default('https://openrouter.ai/api/v1'),
+  OPENROUTER_API_KEY: z.string().optional(),
   NVIDIA_API_KEY_SECRET_ARN: z.string().optional(),
   JWT_SECRET: z.string().min(32).default('consenzo-development-secret-jwt-key-32-chars-minimum'),
   DYNAMODB_TABLE_NAME: z.string().default('consenzo-sessions'),

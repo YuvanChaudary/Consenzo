@@ -1,0 +1,76 @@
+{
+  "categoryId": "headphones",
+  "displayName": "Headphones & Earphones",
+  "description": "Active Noise Cancelling, wireless audiophile and spatial audio headphones",
+  "icon": "Headphones",
+  "specDefinitions": [
+    {
+      "key": "priceInr",
+      "label": "Price (INR)",
+      "type": "currency",
+      "unit": "INR",
+      "min": 2000,
+      "max": 80000,
+      "filterable": true,
+      "sortable": true,
+      "displayGroup": "Pricing",
+      "weight": 1.0,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "formFactor",
+      "label": "Form Factor",
+      "type": "categorical",
+      "options": ["Over-Ear", "In-Ear", "On-Ear"],
+      "filterable": true,
+      "sortable": false,
+      "displayGroup": "Comfort & Design",
+      "weight": 0.85,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "hasAnc",
+      "label": "Active Noise Cancellation (ANC)",
+      "type": "boolean",
+      "filterable": true,
+      "sortable": false,
+      "displayGroup": "Audio Features",
+      "weight": 0.9,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "batteryHours",
+      "label": "Battery Life",
+      "type": "numeric",
+      "unit": "hours",
+      "min": 6,
+      "max": 60,
+      "filterable": true,
+      "sortable": true,
+      "displayGroup": "Battery",
+      "weight": 0.8,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "hasSpatialAudio",
+      "label": "Spatial Audio / Head Tracking",
+      "type": "boolean",
+      "filterable": true,
+      "sortable": false,
+      "displayGroup": "Audio Features",
+      "weight": 0.65,
+      "hardConstraintEligible": false
+    },
+    {
+      "key": "connectivity",
+      "label": "Connectivity",
+      "type": "categorical",
+      "options": ["Bluetooth 5.3, Multipoint, 3.5mm", "Bluetooth 5.2, USB-C", "Bluetooth 5.0"],
+      "filterable": true,
+      "sortable": false,
+      "displayGroup": "Connectivity",
+      "weight": 0.7,
+      "hardConstraintEligible": true
+    }
+  ]
+}

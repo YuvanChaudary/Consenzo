@@ -37,7 +37,8 @@ describe('Full E2E Flow Verification', () => {
       const commandName = command.constructor.name;
       if (commandName === 'PutCommand') return Promise.resolve({});
       if (commandName === 'GetCommand') {
-        if (command.input?.Key?.PK?.startsWith('PARTICIPANT#')) {
+        const sk = command.input?.Key?.SK || '';
+        if (typeof sk === 'string' && sk.startsWith('PREF#')) {
           return Promise.resolve({
             Item: {
               participantId: 'usr_e2e',

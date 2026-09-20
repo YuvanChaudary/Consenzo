@@ -1,84 +1,97 @@
+/* ============================================================
+   NEXUS DESIGN SYSTEM — CSS CUSTOM PROPERTIES (TOKENS)
+   ============================================================ */
+
 :root {
-  /* Surface & Backgrounds */
-  --bg-base: #07090e;
-  --bg-primary: #0c1017;
-  --bg-card: rgba(18, 26, 42, 0.65);
-  --bg-card-hover: rgba(26, 36, 58, 0.8);
-  --bg-card-active: rgba(32, 45, 72, 0.9);
-  --bg-elevated: rgba(22, 32, 50, 0.75);
-  --bg-input: rgba(10, 14, 24, 0.7);
-  --bg-glass: rgba(255, 255, 255, 0.05);
-  --bg-glass-heavy: rgba(10, 15, 26, 0.85);
-  --bg-glass-frosted: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-  --glass-blur: blur(20px) saturate(180%);
+  /* ── Backgrounds ─────────────────────────────────────────── */
+  --bg-base: #0A0E17;
+  --bg-surface: #0D1220;
+  --bg-surface-raised: #111827;
 
-  /* Primary Brand & Accents */
-  --primary: #7c3aed;
-  --primary-light: #9061f9;
-  --primary-dark: #5b21b6;
-  --primary-glow: rgba(124, 58, 237, 0.25);
-  --primary-bg: rgba(124, 58, 237, 0.12);
+  /* ── Accent — Electric Teal ──────────────────────────────── */
+  --accent: #0EA5E9;
+  --accent-dim: #0284C7;
+  --accent-vivid: #38BDF8;
+  --accent-glow: rgba(14, 165, 233, 0.3);
+  --accent-bg: rgba(14, 165, 233, 0.08);
+  --accent-border: rgba(14, 165, 233, 0.35);
 
-  /* Semantic State Colors */
+  /* ── Glass Elevation L1 (panels, nav, filter drawers) ────── */
+  --glass-l1-bg: rgba(255, 255, 255, 0.045);
+  --glass-l1-blur: blur(24px) saturate(160%);
+  --glass-l1-border: 1px solid rgba(255, 255, 255, 0.08);
+  --glass-l1-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  --glass-l1-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+
+  /* ── Glass Elevation L2 (modals, active cards) ───────────── */
+  --glass-l2-bg: rgba(255, 255, 255, 0.07);
+  --glass-l2-blur: blur(40px) saturate(180%);
+  --glass-l2-border: 1px solid rgba(255, 255, 255, 0.12);
+  --glass-l2-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  --glass-l2-shadow: 0 16px 64px rgba(0, 0, 0, 0.6);
+
+  /* ── Product Card Surface (near-solid, never glass-on-glass) */
+  --product-card-bg: rgba(13, 18, 32, 0.92);
+  --product-card-border: rgba(255, 255, 255, 0.06);
+
+  /* ── Semantic Colors ─────────────────────────────────────── */
   --success: #10b981;
-  --success-glow: rgba(16, 185, 129, 0.25);
-  --success-bg: rgba(16, 185, 129, 0.12);
-
+  --success-bg: rgba(16, 185, 129, 0.1);
+  --success-border: rgba(16, 185, 129, 0.3);
   --warning: #f59e0b;
-  --warning-glow: rgba(245, 158, 11, 0.25);
-  --warning-bg: rgba(245, 158, 11, 0.12);
-
+  --warning-bg: rgba(245, 158, 11, 0.1);
+  --warning-border: rgba(245, 158, 11, 0.3);
   --danger: #ef4444;
-  --danger-glow: rgba(239, 68, 68, 0.25);
-  --danger-bg: rgba(239, 68, 68, 0.12);
-
+  --danger-bg: rgba(239, 68, 68, 0.1);
+  --danger-border: rgba(239, 68, 68, 0.3);
   --info: #3b82f6;
-  --info-glow: rgba(59, 130, 246, 0.25);
-  --info-bg: rgba(59, 130, 246, 0.12);
+  --info-bg: rgba(59, 130, 246, 0.1);
+  --info-border: rgba(59, 130, 246, 0.3);
 
-  /* Amazon Brand Accent */
-  --amazon-orange: #ff9900;
-  --amazon-dark: #146eb4;
+  /* ── Typography ──────────────────────────────────────────── */
+  --font-display: 'Sora', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, monospace;
 
-  /* Typography Colors */
+  /* ── Text Colors ─────────────────────────────────────────── */
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-tertiary: #64748b;
   --text-muted: #475569;
-  --text-inverse: #0f172a;
 
-  /* Border & Dividers */
+  /* ── Borders ─────────────────────────────────────────────── */
   --border-subtle: rgba(255, 255, 255, 0.07);
   --border-medium: rgba(255, 255, 255, 0.14);
-  --border-accent: rgba(124, 58, 237, 0.4);
-  --border-success: rgba(16, 185, 129, 0.4);
-  --border-warning: rgba(245, 158, 11, 0.4);
+  --border-strong: rgba(255, 255, 255, 0.22);
 
-  /* Typography Stacks */
-  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  /* ── Shadows ─────────────────────────────────────────────── */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.6), 0 4px 14px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 20px rgba(14, 165, 233, 0.4), 0 0 60px rgba(14, 165, 233, 0.15);
 
-  /* Elevation Shadows */
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 24px var(--primary-glow);
-  --shadow-glow-success: 0 0 24px var(--success-glow);
-
-  /* Radii */
+  /* ── Border Radii ────────────────────────────────────────── */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
   --radius-xl: 24px;
   --radius-full: 9999px;
 
-  /* Transitions */
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  /* ── Transitions ─────────────────────────────────────────── */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
   --transition-smooth: 350ms cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* Layout Breakpoints */
-  --max-width: 1200px;
-  --chat-drawer-width: 440px;
+  /* ── Layout ──────────────────────────────────────────────── */
+  --max-width: 1280px;
+  --nav-height: 64px;
+
+  /* ── Z-Index Scale ───────────────────────────────────────── */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-overlay: 300;
+  --z-modal: 400;
+  --z-toast: 500;
 }

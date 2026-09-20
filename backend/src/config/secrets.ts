@@ -3,9 +3,26 @@ import { env } from './env';
 
 const secretsClient = new SecretsManagerClient({});
 let cachedNvidiaKey: string | null = null;
+let cachedOpenRouterKey: string | null = null;
 
 export function resetSecretsCache() {
   cachedNvidiaKey = null;
+  cachedOpenRouterKey = null;
+}
+
+export async function getOpenRouterApiKey(): Promise<string> {
+  if (cachedOpenRouterKey) {
+    return cachedOpenRouterKey;
+  }
+
+  const key = process.env.OPENROUTER_API_KEY || (env as any).OPENROUTER_API_KEY;
+  if (key) {
+    cachedOpenRouterKey = key;
+    return key;
+  }
+
+  // Fallback to demo default if unset
+  return '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';
 }
 
 export async function getNvidiaApiKey(): Promise<string> {

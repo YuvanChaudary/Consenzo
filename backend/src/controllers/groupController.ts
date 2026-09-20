@@ -5,6 +5,7 @@ import { votingService } from '../services/votingService';
 import { successResponse } from '../utils/response';
 import { AppError } from '../middleware/error';
 import { verifySessionToken } from '../middleware/auth';
+import { preferenceRepository } from '../repositories/preferenceRepository';
 
 export const groupController = {
   async createGroup(event: APIGatewayProxyEvent): Promise<any> {
@@ -103,8 +104,35 @@ export const groupController = {
       throw new AppError('MISSING_GROUP_ID', 400, undefined, 'Group ID is required.');
     }
 
+    let strategy: any = 'HYBRID';
+    let allowPartial = false;
     try {
-      const result = await analysisService.analyzeGroup(groupId);
+      if (event.body) {
+        const parsed = JSON.parse(event.body);
+        if (parsed.strategy) strategy = parsed.strategy;
+        if (parsed.allowPartial !== undefined) allowPartial = Boolean(parsed.allowPartial);
+      }
+      if (event.queryStringParameters?.['allowPartial'] === 'true') {
+        allowPartial = true;
+      }
+    } catch {}
+
+    try {
+      const result = await analysisService.analyzeGroup(groupId, strategy, { allowPartial });
+
+      // Persist so every member sees the SAME board (GET returns the stored copy)
+      await preferenceRepository.saveAnalysis(groupId, result);
+
+      // Group feed: announce the consensus winner
+      const winner = result?.topRecommendations?.[0]?.product;
+      if (winner) {
+        await preferenceRepository.addGroupEvent(
+          groupId, 'system', 'ANALYSIS_COMPLETE',
+          `Consensus analysis completed — top recommendation: ${winner.modelName || winner.name || winner.asin} at Rs.${(winner.priceInr || 0).toLocaleString('en-IN')}`,
+          { productId: winner.asin || winner.id, modelName: winner.modelName || winner.name, priceInr: winner.priceInr }
+        );
+      }
+
       return successResponse(result, 200, {
         requestId: event.requestContext.requestId,
         correlationId: (event.headers as any)['x-correlation-id'] || 'unknown',
@@ -114,11 +142,38 @@ export const groupController = {
       if (e.message === 'NO_PARTICIPANTS') {
         throw new AppError('NO_PARTICIPANTS', 400, undefined, 'No participants found in the group.');
       }
+      if (e.message === 'PREFERENCES_MISSING') {
+        throw new AppError('PREFERENCES_MISSING', 409, undefined,
+          `Waiting for shopping preferences from: ${(e.missing || []).join(', ')}. All squad members must set their preferences first.`);
+      }
       if (e.message === 'NO_FEASIBLE_PRODUCTS') {
         throw new AppError('NO_FEASIBLE_PRODUCTS', 404, undefined, 'No products satisfy all group constraints.');
       }
+      if (e.message === 'CATALOG_UNAVAILABLE') {
+        throw new AppError('CATALOG_UNAVAILABLE', 400, undefined,
+          `No catalog is available for category "${e.category}". This category is not supported yet.`);
+      }
       throw new AppError('ANALYSIS_FAILED', 500, undefined, e.message);
     }
+  },
+
+  /** GET the persisted analysis — every member reads the identical stored result. */
+  async getAnalysis(event: APIGatewayProxyEvent): Promise<any> {
+    const groupId = event.pathParameters?.['groupId'];
+    if (!groupId) {
+      throw new AppError('MISSING_GROUP_ID', 400, undefined, 'Group ID is required.');
+    }
+
+    const stored = await preferenceRepository.getLatestAnalysis(groupId);
+    if (!stored) {
+      throw new AppError('ANALYSIS_NOT_FOUND', 404, undefined, 'No analysis has been computed for this group yet.');
+    }
+
+    return successResponse(stored, 200, {
+      requestId: event.requestContext.requestId,
+      correlationId: (event.headers as any)['x-correlation-id'] || 'unknown',
+      timestamp: new Date().toISOString(),
+    });
   },
 
   async castVote(event: APIGatewayProxyEvent): Promise<any> {

@@ -65,7 +65,7 @@ export class ConstraintEngine {
       if (isFeasible) {
         feasibleSet.push(product);
       } else {
-        gatedOut.set(product.asin, reasons);
+        gatedOut.set((product as any).id || product.asin, reasons);
       }
     }
 
@@ -79,7 +79,6 @@ export class ConstraintEngine {
     // Simple relaxation: Ignore one hard constraint at a time and see if candidates emerge
     // In a real impl, this would be more sophisticated (e.g., relaxation of budget by 10%)
     const relaxationSet: SmartTvProduct[] = [];
-    const conflictPairs: string[] = [];
 
     // Logic: Identify which hard constraints are the biggest blockers
     // For the MVP, we'll return a set of products that satisfy all dealbreakers
@@ -109,7 +108,22 @@ export class ConstraintEngine {
       }
     }
 
-    return { relaxationSet, conflictPairs: ['Budget vs Refresh Rate'] }; // Mock conflict pair
+    // Dynamically derive conflict pairs from gateCatalog
+    const { gatedOut } = this.gateCatalog(catalog, profiles);
+    const conflictSet = new Set<string>();
+    for (const [_, reasons] of gatedOut.entries()) {
+      for (const reason of reasons) {
+        if (reason.includes('failed')) {
+          conflictSet.add(reason);
+        }
+      }
+    }
+
+    const conflictPairs = conflictSet.size > 0
+      ? Array.from(conflictSet).slice(0, 3)
+      : ['Budget vs Premium Feature Divergence'];
+
+    return { relaxationSet, conflictPairs };
   }
 }
 

@@ -4,6 +4,7 @@ import { preferenceExtractor } from '../interviewer/extractor';
 import { successResponse } from '../utils/response';
 import { AppError } from '../middleware/error';
 import { requireParticipantAuth } from '../middleware/auth';
+import { ParticipantPreferenceProfile } from '@shared/types/preferences';
 
 export const preferenceController = {
   async getPreferences(event: APIGatewayProxyEvent): Promise<any> {
@@ -15,23 +16,26 @@ export const preferenceController = {
     const auth = await requireParticipantAuth(event.headers as any, participantId);
 
     try {
-      const profile = await preferenceRepository.getConfirmedProfile(auth.sub);
+      // Resolve the DRAFT profile within the caller's group (falls back to GSI).
+      // The draft is what the interview has extracted so far — surfacing it here
+      // lets the UI show captured constraints before the member confirms.
+      let profile: Awaited<ReturnType<typeof preferenceRepository.getProfile>> = null;
+      if (auth.groupId) {
+        profile = await preferenceRepository.getProfile(auth.groupId, auth.sub);
+      }
+      if (!profile) {
+        profile = await preferenceRepository.getConfirmedProfileByParticipant(auth.sub);
+      }
 
       if (!profile) {
-        const defaultSummary = `• **Top Priority**: 120Hz native gaming for PS5 console\n• **Hardware**: Minimum 3 HDMI ports with low latency gaming mode\n• **Budget Ceiling**: Strict limit up to ₹50,000\n• **Brand**: Open to LG, Samsung, or Sony`;
-        const defaultConstraints = [
-          { attribute: 'refreshRateHz', operator: 'GTE', value: 120, type: 'PREFERENCE', weight: 0.95 },
-          { attribute: 'priceInr', operator: 'LTE', value: 50000, type: 'HARD_CONSTRAINT', weight: 1.0 },
-          { attribute: 'hasHdmi21', operator: 'EQ', value: true, type: 'PREFERENCE', weight: 0.85 }
-        ];
-
+        // Honest empty state — no fabricated TV preferences
         return successResponse({
           participantId: auth.sub,
           confirmed: false,
-          summaryMarkdown: defaultSummary,
-          constraints: defaultConstraints,
+          summaryMarkdown: '',
+          summary: '',
+          constraints: [],
           profile: null,
-          summary: defaultSummary,
         }, 200, {
           requestId: event.requestContext.requestId,
           correlationId: (event.headers as any)['x-correlation-id'] || 'unknown',
@@ -39,11 +43,12 @@ export const preferenceController = {
         });
       }
 
+      const confirmed = (profile as any).confirmedByParticipant === true;
       const summary = profile.summaryMarkdown || preferenceExtractor.generateSummary(profile);
 
       return successResponse({
         participantId: auth.sub,
-        confirmed: true,
+        confirmed,
         summaryMarkdown: summary,
         constraints: profile.constraints || [],
         profile,
@@ -66,35 +71,42 @@ export const preferenceController = {
 
     const auth = await requireParticipantAuth(event.headers as any, participantId);
 
+    const groupId = auth.groupId;
+    if (!groupId) {
+      throw new AppError('NO_GROUP', 400, undefined, 'Your session token is not linked to a group.');
+    }
+
     try {
       const body = JSON.parse(event.body || '{}');
-      let profile = body.profile || (body.constraints ? body : null);
+      const supplied = body.profile || (body.constraints ? body : null);
 
-      if (!profile || !profile.constraints) {
-        const existing = await preferenceRepository.getConfirmedProfile(auth.sub);
-        if (existing) {
-          profile = existing;
-        } else {
-          profile = {
-            participantId: auth.sub,
-            groupId: auth.groupId,
-            constraints: [
-              { attribute: 'refreshRateHz', operator: 'GTE', value: 120, type: 'PREFERENCE', weight: 0.95 },
-              { attribute: 'priceInr', operator: 'LTE', value: 50000, type: 'HARD_CONSTRAINT', weight: 1.0 },
-            ],
-            summaryMarkdown: '• Top Priority: 120Hz native gaming\n• Budget Ceiling: ₹50,000',
-            confirmedByParticipant: true,
-          };
-        }
-      }
+      // The stored draft (written during the interview) is the source of truth.
+      // A body may add/clarify constraints, but confirming never discards what
+      // was already extracted. An honestly empty draft stays empty.
+      const draft = await preferenceRepository.getProfile(groupId, auth.sub);
+      const constraints = supplied?.constraints?.length
+        ? supplied.constraints
+        : (draft?.constraints || []);
 
-      const { ready } = await preferenceRepository.confirmAndCheckReadiness(
-        auth.sub,
-        { ...profile, participantId: auth.sub, confirmedByParticipant: true }
-      );
+      const profile = {
+        participantId: auth.sub,
+        groupId,
+        constraints,
+        summaryMarkdown:
+          body.summaryMarkdown
+          || supplied?.summaryMarkdown
+          || draft?.summaryMarkdown
+          || preferenceExtractor.generateSummary({ participantId: auth.sub, groupId, constraints } as any),
+      };
+
+      const { ready } = await preferenceRepository.confirmAndCheckReadiness({
+        ...profile,
+        confirmedByParticipant: true,
+      } as any);
 
       return successResponse({
         participantId: auth.sub,
+        groupId,
         confirmed: true,
         readiness: ready ? 'READY_FOR_ANALYSIS' : 'CONFIRMED',
         lockedAt: new Date().toISOString(),
@@ -106,6 +118,68 @@ export const preferenceController = {
     } catch (e: any) {
       if (e instanceof AppError) throw e;
       throw new AppError('CONFIRMATION_FAILED', 500, undefined, e.message);
+    }
+  },
+
+  async updatePreferences(event: APIGatewayProxyEvent): Promise<any> {
+    const participantId = event.pathParameters?.['participantId'];
+    if (!participantId) {
+      throw new AppError('MISSING_PARAMS', 400, undefined, 'Participant ID is required.');
+    }
+
+    const auth = await requireParticipantAuth(event.headers as any, participantId);
+    const groupId = auth.groupId;
+    if (!groupId) {
+      throw new AppError('NO_GROUP', 400, undefined, 'Your session token is not linked to a group.');
+    }
+
+    try {
+      const body = JSON.parse(event.body || '{}');
+      const constraints = Array.isArray(body.constraints) ? body.constraints : [];
+      const existing = await preferenceRepository.getProfile(groupId, auth.sub);
+      const isConfirmed = body.confirmed !== undefined ? Boolean(body.confirmed) : (existing?.confirmedByParticipant ?? false);
+
+      const summaryMarkdown =
+        body.summaryMarkdown
+        || preferenceExtractor.generateSummary({ participantId: auth.sub, groupId, constraints } as any);
+
+      const profile: ParticipantPreferenceProfile = {
+        participantId: auth.sub,
+        groupId,
+        constraints,
+        summaryMarkdown,
+        confirmedByParticipant: isConfirmed,
+      };
+
+      // Save directly to repository (allows full editing/adding/deleting of constraints)
+      await preferenceRepository.savePreferenceProfile(profile);
+
+      // Context update: emit event to group feed
+      await preferenceRepository.addGroupEvent(
+        groupId,
+        auth.sub,
+        'PREF_UPDATED',
+        `updated their preference requirements (${constraints.length} constraints specified)`
+      );
+
+      // Invalidate cached analysis so next calculation reflects edited preferences
+      await preferenceRepository.invalidateAnalysis(groupId);
+
+      return successResponse({
+        participantId: auth.sub,
+        groupId,
+        confirmed: isConfirmed,
+        summaryMarkdown,
+        constraints,
+        updatedAt: new Date().toISOString(),
+      }, 200, {
+        requestId: event.requestContext.requestId,
+        correlationId: (event.headers as any)['x-correlation-id'] || 'unknown',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (e: any) {
+      if (e instanceof AppError) throw e;
+      throw new AppError('UPDATE_FAILED', 500, undefined, e.message);
     }
   },
 };

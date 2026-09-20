@@ -1,0 +1,78 @@
+{
+  "categoryId": "soundbars",
+  "displayName": "Soundbars & Home Audio",
+  "description": "Dolby Atmos, wireless subwoofers and spatial audio sound systems",
+  "icon": "Speaker",
+  "specDefinitions": [
+    {
+      "key": "priceInr",
+      "label": "Price (INR)",
+      "type": "currency",
+      "unit": "INR",
+      "min": 5000,
+      "max": 180000,
+      "filterable": true,
+      "sortable": true,
+      "displayGroup": "Pricing",
+      "weight": 1.0,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "totalPowerWatts",
+      "label": "Total Power Output",
+      "type": "numeric",
+      "unit": "W",
+      "min": 100,
+      "max": 1200,
+      "filterable": true,
+      "sortable": true,
+      "displayGroup": "Audio Power",
+      "weight": 0.8,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "channels",
+      "label": "Channels",
+      "type": "categorical",
+      "options": ["2.0", "2.1", "3.1", "5.1", "7.1.4", "11.1.4"],
+      "filterable": true,
+      "sortable": false,
+      "displayGroup": "Surround Sound",
+      "weight": 0.85,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "audioFormat",
+      "label": "Audio Format Support",
+      "type": "categorical",
+      "options": ["Dolby Atmos", "DTS:X", "Dolby Digital", "Stereo"],
+      "filterable": true,
+      "sortable": false,
+      "displayGroup": "Surround Sound",
+      "weight": 0.8,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "connectivity",
+      "label": "Connectivity",
+      "type": "categorical",
+      "options": ["HDMI eARC, Bluetooth 5.3, WiFi", "HDMI eARC, Optical, Bluetooth", "Bluetooth, AUX, Optical"],
+      "filterable": true,
+      "sortable": false,
+      "displayGroup": "Connectivity",
+      "weight": 0.7,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "subwoofer",
+      "label": "Subwoofer Type",
+      "type": "categorical",
+      "options": ["Wireless Subwoofer", "Built-in Subwoofer", "Wired Subwoofer", "None"],
+      "filterable": true,
+      "sortable": false,
+      "displayGroup": "Audio Power",
+      "weight": 0.75,
+      "hardConstraintEligible": true
+    }
+  ]
+}

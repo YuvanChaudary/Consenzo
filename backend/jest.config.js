@@ -1,15 +1,10 @@
+/** @type {import('ts-jest').JestConfigWithTsJest} */
 module.exports = {
-  rootDir: '../',
   preset: 'ts-jest',
   testEnvironment: 'node',
   moduleNameMapper: {
-    '^@shared/(.*)$': '<rootDir>/shared/$1',
-    '^uuid$': 'uuid',
+    '^@shared/(.*)$': '<rootDir>/../shared/$1',
   },
-  transformIgnorePatterns: ['node_modules/(?!uuid)'],
-  testMatch: ['<rootDir>/backend/tests/**/*.test.ts'],
-  setupFiles: ['<rootDir>/backend/tests/setupEnv.ts'],
-  transform: {
-    '^.+\\.(ts|tsx|js)$': 'ts-jest',
-  },
+  testMatch: ['<rootDir>/tests/**/*.test.ts'],
+  setupFiles: ['<rootDir>/tests/setupEnv.ts'],
 };

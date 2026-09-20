@@ -159,3 +159,32 @@ graph TD
 2. **Deterministic Stepwise Relaxation**: The engine identifies the smallest mathematical adjustment to a `HARD_CONSTRAINT` that yields at least 2 viable candidates.
 3. **Explicit Labeling**: Every product generated under a relaxed constraint carries an explicit visual flag:
    `[COMPROMISE: Budget adjusted from ₹45,000 to ₹48,000 to satisfy gaming requirement]`.
+
+---
+
+## 7. Nearest-Feasible Proximity Fallback (implemented)
+
+The relaxation protocol above remains the *interactive* path. In addition, the engine now guarantees
+that an analysis **always completes with real products** - it never dead-ends on an empty set and
+never falls back to an arbitrary slice of the catalog:
+
+1. **Strict gating first** - if the feasible set is non-empty, proceed normally (`proximity.mode = "EXACT"`).
+2. **If the feasible set is empty**, the **Proximity Engine** (`src/engine/proximityEngine.ts`) scores
+   every catalog item by graduated attribute satisfaction and the top 15 nearest items become the
+   feasible set (`proximity.mode = "NEAREST"`).
+
+Proximity math is derived **from the catalog's own distribution** (`src/engine/fitStats.ts`):
+
+| Attribute class | Distance measure |
+| :--- | :--- |
+| Continuous numeric (price, size) | `1/(1+z^2)` on robust z-score, `z = gap / MAD-derived sigma` (median/MAD, immune to premium-tail skew) |
+| Tiered numeric (refresh rate) | Continuous tier position with **linear extrapolation beyond the outermost tier** - an impossible `>= 240Hz` request in a 60/120Hz market keeps a real, unsatisfied gap |
+| Ordinal categorical (resolution, panel type) | Ladder distance over ordered tiers (`FullHD -> 4K -> 8K`, `LED -> QLED -> MiniLED -> OLED`) |
+| Brand / unordered categorical | Market-segment adjacency via mean-price distance + frequency prior |
+| Value absent from market | Flat availability gap attributed equally to all products (a market fact, not a product penalty) |
+
+Every recommendation under `NEAREST` mode carries: `matchScore` (0-100%), `matchQuality`
+(`EXACT / NEAR / PARTIAL / DISTANT`), per-violation gap descriptions naming the **closest real market
+value** (e.g. "Requested >= 85-inch; this model is 55-inch; closest on market: 65-inch"), and a
+per-participant proximity utility `u = 10 * (0.9 * proximity + 0.1 * rating/5)` that feeds the
+**frozen fairness operator (ADR-006) unchanged** - the deterministic/LLM boundary is preserved.

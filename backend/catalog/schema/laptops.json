@@ -1,0 +1,108 @@
+{
+  "categoryId": "laptops",
+  "displayName": "Laptops & Workstations",
+  "description": "High performance laptops for productivity, development, gaming and creative work",
+  "icon": "Laptop",
+  "specDefinitions": [
+    {
+      "key": "priceInr",
+      "label": "Price (INR)",
+      "type": "currency",
+      "unit": "INR",
+      "min": 25000,
+      "max": 350000,
+      "filterable": true,
+      "sortable": true,
+      "displayGroup": "Pricing",
+      "weight": 1.0,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "screenSizeInches",
+      "label": "Screen Size",
+      "type": "numeric",
+      "unit": "inches",
+      "min": 13,
+      "max": 18,
+      "filterable": true,
+      "sortable": true,
+      "displayGroup": "Display",
+      "weight": 0.8,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "ramGb",
+      "label": "RAM",
+      "type": "numeric",
+      "unit": "GB",
+      "min": 8,
+      "max": 64,
+      "filterable": true,
+      "sortable": true,
+      "displayGroup": "Performance",
+      "weight": 0.9,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "storageGb",
+      "label": "Storage (SSD)",
+      "type": "numeric",
+      "unit": "GB",
+      "min": 256,
+      "max": 4096,
+      "filterable": true,
+      "sortable": true,
+      "displayGroup": "Performance",
+      "weight": 0.75,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "batteryHours",
+      "label": "Battery Life",
+      "type": "numeric",
+      "unit": "hours",
+      "min": 4,
+      "max": 22,
+      "filterable": true,
+      "sortable": true,
+      "displayGroup": "Mobility",
+      "weight": 0.85,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "weightKg",
+      "label": "Weight",
+      "type": "numeric",
+      "unit": "kg",
+      "min": 1.0,
+      "max": 3.5,
+      "filterable": true,
+      "sortable": true,
+      "displayGroup": "Mobility",
+      "weight": 0.7,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "processor",
+      "label": "Processor",
+      "type": "categorical",
+      "options": ["Intel Core i5", "Intel Core i7", "Intel Core i9", "AMD Ryzen 5", "AMD Ryzen 7", "Apple M3", "Apple M3 Pro", "Apple M3 Max"],
+      "filterable": true,
+      "sortable": false,
+      "displayGroup": "Performance",
+      "weight": 0.8,
+      "hardConstraintEligible": false
+    },
+    {
+      "key": "os",
+      "label": "Operating System",
+      "type": "categorical",
+      "options": ["Windows 11", "macOS", "Linux"],
+      "filterable": true,
+      "sortable": false,
+      "displayGroup": "Software",
+      "weight": 0.7,
+      "hardConstraintEligible": true
+    }
+  ]
+}

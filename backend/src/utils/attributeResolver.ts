@@ -1,22 +1,53 @@
 export function resolveProductAttribute(product: any, attribute: string): any {
   if (!product) return undefined;
+
+  // 1. Direct object property
   if (product[attribute] !== undefined && product[attribute] !== null) {
     return product[attribute];
   }
 
-  const attrLower = attribute.toLowerCase();
+  const attrLower = (attribute || '').toLowerCase().trim();
 
-  // Price & Budget
+  // 2. Generic product.specs array lookup
+  if (Array.isArray(product.specs)) {
+    const spec = product.specs.find(
+      (s: any) =>
+        (s.key && s.key.toLowerCase() === attrLower) ||
+        (s.label && s.label.toLowerCase() === attrLower)
+    );
+    if (spec && spec.value !== undefined && spec.value !== null) {
+      return spec.value;
+    }
+  }
+
+  // 3. Price & Budget aliases
   if (attrLower === 'priceinr' || attrLower === 'price' || attrLower === 'budget' || attrLower === 'maxprice') {
     return product.priceInr;
   }
 
-  // Soundbars
+  // 4. Headphones & Audio
+  if (attrLower === 'hasanc' || attrLower === 'anc' || attrLower === 'noisecancelling' || attrLower === 'noise_cancelling') {
+    if (product.hasAnc !== undefined) return product.hasAnc;
+    const name = (product.name || product.modelName || '').toLowerCase();
+    return name.includes('noise cancel') || name.includes('anc');
+  }
+
+  if (attrLower === 'formfactor' || attrLower === 'form_factor') {
+    return product.formFactor || 'Over-Ear';
+  }
+
+  if (attrLower === 'hasspatialaudio' || attrLower === 'spatialaudio' || attrLower === 'spatial_audio') {
+    if (product.hasSpatialAudio !== undefined) return product.hasSpatialAudio;
+    const name = (product.name || product.modelName || '').toLowerCase();
+    return name.includes('spatial') || name.includes('atmos');
+  }
+
+  // 5. Soundbars
   if (attrLower === 'dolbyatmos' || attrLower === 'dolby_atmos') {
     if (product.dolbyAtmos !== undefined) return product.dolbyAtmos;
     const format = (product.audioFormat || '').toLowerCase();
     if (format.includes('atmos')) return true;
-    if (format.includes('dolby')) return true; // match Dolby Audio/Digital as valid Dolby
+    if (format.includes('dolby')) return true;
     return false;
   }
 
@@ -45,7 +76,7 @@ export function resolveProductAttribute(product: any, attribute: string): any {
     return conn.includes('earc') || conn.includes('arc') || conn.includes('hdmi') || product.hasHdmiEarc === true;
   }
 
-  // Laptops
+  // 6. Laptops
   if (attrLower === 'ramgb' || attrLower === 'ram') {
     return product.ramGb;
   }
@@ -54,7 +85,7 @@ export function resolveProductAttribute(product: any, attribute: string): any {
     return product.storageGb;
   }
 
-  if (attrLower === 'batteryhours' || attrLower === 'battery') {
+  if (attrLower === 'batteryhours' || attrLower === 'batterylifehours' || attrLower === 'battery' || attrLower === 'batterylife') {
     return product.batteryHours;
   }
 
@@ -63,12 +94,14 @@ export function resolveProductAttribute(product: any, attribute: string): any {
   }
 
   if (attrLower === 'gamingcapable' || attrLower === 'gaming' || attrLower === 'gpu') {
+    // Dedicated graphics only — large RAM alone does not make a machine
+    // gaming-capable, so it is deliberately not used as a proxy here.
     const proc = (product.processor || '').toLowerCase();
-    const model = (product.modelName || '').toLowerCase();
-    return proc.includes('rtx') || proc.includes('gtx') || model.includes('gaming') || (product.ramGb >= 16);
+    const model = (product.modelName || product.name || '').toLowerCase();
+    return proc.includes('rtx') || proc.includes('gtx') || model.includes('gaming');
   }
 
-  // Smart TVs
+  // 7. Smart TVs
   if (attrLower === 'refreshratehz' || attrLower === 'refreshrate' || attrLower === 'hz') {
     return product.refreshRateHz;
   }
@@ -81,9 +114,22 @@ export function resolveProductAttribute(product: any, attribute: string): any {
     return product.hasHdmi21;
   }
 
-  // Brand
+  // 8. Chairs & Ergonomics
+  if (attrLower === 'haslumbarsupport' || attrLower === 'lumbar' || attrLower === 'lumbarsupport') {
+    return product.hasLumbarSupport !== false;
+  }
+
+  if (attrLower === 'material') {
+    return product.material;
+  }
+
+  // 9. Brand & Rating
   if (attrLower === 'brand') {
     return product.brand;
+  }
+
+  if (attrLower === 'rating') {
+    return product.rating;
   }
 
   return undefined;

@@ -1,8 +1,38 @@
 import http from 'http';
+import fs from 'fs';
+import path from 'path';
 import { URL } from 'url';
 import { APIGatewayProxyEvent } from 'aws-lambda';
 import { routeRequest } from './router';
 import { getCorrelationContext } from './middleware/correlation';
+
+// Zero-dependency .env loader for local development
+function loadEnvFile() {
+  const envPaths = [
+    path.resolve(process.cwd(), '.env'),
+    path.resolve(__dirname, '../../.env'),
+    path.resolve(__dirname, '../.env'),
+  ];
+  for (const p of envPaths) {
+    if (fs.existsSync(p)) {
+      const content = fs.readFileSync(p, 'utf-8');
+      for (const line of content.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const eqIdx = trimmed.indexOf('=');
+        if (eqIdx !== -1) {
+          const key = trimmed.slice(0, eqIdx).trim();
+          const val = trimmed.slice(eqIdx + 1).trim();
+          if (key && process.env[key] === undefined) {
+            process.env[key] = val;
+          }
+        }
+      }
+      break;
+    }
+  }
+}
+loadEnvFile();
 
 const PORT = parseInt(process.env.PORT || '3001', 10);
 
@@ -118,7 +148,7 @@ export const server = http.createServer(async (req, res) => {
 if (require.main === module) {
   server.listen(PORT, '0.0.0.0', () => {
     console.log('================================================================');
-    console.log(` Consenzo Backend API Server Running Locally`);
+    console.log(` Shippyfy Backend API Server Running Locally`);
     console.log(` URL:          http://localhost:${PORT}`);
     console.log(` Health Check: http://localhost:${PORT}/health`);
     console.log(` Storage:      ${process.env.USE_LOCAL_DB === 'true' ? 'In-Memory Single-Table DynamoDB' : 'AWS DynamoDB'}`);

@@ -17,7 +17,7 @@ confirm_changeset = false
 resolve_s3 = true
 s3_prefix = "consenzo-core-dev"
 region = "us-east-1"
-parameter_overrides = "Stage=\"dev\" LLMProvider=\"nvidia\" LLMModel=\"nvidia/nemotron-3.5-lightning-30b-a3b\" LLMBaseUrl=\"https://integrate.api.nvidia.com/v1\""
+parameter_overrides = "Stage=\"dev\" LLMProvider=\"nvidia\" LLMModel=\"nvidia/nemotron-3.5-lightning-30b-a3b\" LLMBaseUrl=\"https://integrate.api.nvidia.com/v1\" JwtSecret=\"{{resolve:secretsmanager:consenzo/jwt-secret~true:SecretString:secret}}\""
 
 [default.package.parameters]
 resolve_s3 = true

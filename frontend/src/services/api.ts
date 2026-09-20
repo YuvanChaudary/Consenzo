@@ -4,7 +4,7 @@ import { SmartTvProduct } from '@shared/types/catalog';
 import { CanonicalConstraint } from '@shared/types/preferences';
 
 // Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'https://0wc5as4rug.execute-api.us-east-1.amazonaws.com/dev';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const FORCE_MOCK = import.meta.env.VITE_USE_MOCKS === 'true';
 
 // Generate UUID for correlation
@@ -85,8 +85,14 @@ export interface TopRecommendation {
     meanUtility: number;
     fairnessPenalty: number;
     individualBreakdown: Record<string, number>;
+    neuralScore?: number;
   };
   groundedExplanation: string;
+  /** EXACT when every group constraint is satisfied; otherwise the nearest-tier label. */
+  matchQuality?: string;
+  matchScore?: number;
+  exactMatch?: boolean;
+  attentionWeights?: Record<string, number>;
 }
 
 export interface ParticipantBreakdown {
@@ -97,6 +103,7 @@ export interface ParticipantBreakdown {
   utility: number;
   status: 'FULLY_SATISFIED' | 'COMPROMISED' | 'CONCEDED';
   concessionNote: string;
+  attentionWeight?: number;
 }
 
 export interface GroupAnalysisResult {
@@ -132,8 +139,25 @@ export interface VoteResult {
 // HTTP Helper with standard envelope unwrapping
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   let token: string | null = null;
+
+  // 1. Resolve room ID from path or current location to prevent multi-participant collision
+  let targetGroupId: string | null = null;
+  const pathMatch = path.match(/\/groups\/([^\/?#]+)/) || path.match(/\/conversations\/conv_([^_]+)/);
+  if (pathMatch) {
+    targetGroupId = pathMatch[1];
+  } else if (typeof window !== 'undefined') {
+    const locMatch = window.location.pathname.match(/\/room\/([^\/?#]+)/);
+    if (locMatch) targetGroupId = locMatch[1];
+  }
+
+  // 2. Check tab sessionStorage (isolated per tab)
   if (typeof sessionStorage !== 'undefined') {
-    token = sessionStorage.getItem('consenzo_token');
+    if (targetGroupId) {
+      token = sessionStorage.getItem(`consenzo_token_${targetGroupId}`);
+    }
+    if (!token) {
+      token = sessionStorage.getItem('consenzo_token');
+    }
     if (!token) {
       try {
         const storedSession = sessionStorage.getItem('consenzo_participant_session');
@@ -143,14 +167,28 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       } catch {}
     }
   }
+
+  // 3. Fallback to localStorage
   if (!token && typeof localStorage !== 'undefined') {
-    token = localStorage.getItem('consenzo_token');
+    if (targetGroupId) {
+      token = localStorage.getItem(`consenzo_token_${targetGroupId}`);
+    }
+    if (!token) {
+      token = localStorage.getItem('consenzo_token');
+    }
     if (!token) {
       try {
         const storedSession = localStorage.getItem('consenzo_participant_session');
         if (storedSession) {
           token = JSON.parse(storedSession)?.token || null;
         }
+      } catch {}
+    }
+    if (!token) {
+      // Zustand-persisted auth (survives tab reloads)
+      try {
+        const auth = JSON.parse(localStorage.getItem('shippyfy-auth') || localStorage.getItem('nexus-auth') || 'null');
+        token = auth?.state?.token || null;
       } catch {}
     }
   }
@@ -167,23 +205,57 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers
-  });
+  const controller = new AbortController();
+  const requestTimeout = (options as any)?.timeout || 35000;
+  const timeoutId = setTimeout(() => controller.abort(), requestTimeout);
 
-  const body = await response.json();
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
 
-  if (!response.ok) {
-    const errorBody = body as ApiErrorEnvelope;
-    throw new Error(errorBody.error?.message || `Request failed with status ${response.status}`);
+    const body = await response.json();
+
+    if (!response.ok) {
+      const errorBody = body as ApiErrorEnvelope;
+      throw new Error(errorBody.error?.message || `Request failed with status ${response.status}`);
+    }
+
+    const successBody = body as ApiResponse<T>;
+    return successBody.data;
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('Server response timed out. Please verify the backend is running.');
+    }
+    throw err;
   }
-
-  const successBody = body as ApiResponse<T>;
-  return successBody.data;
 }
 
 // Exported API Methods
+
+/**
+ * Decode the session JWT payload (sub=participantId, groupId, role).
+ * Zero-trust note: used ONLY for UI display; the backend always re-verifies.
+ */
+export function getTokenPayload(): { sub: string; groupId?: string; role?: string } | null {
+  for (const store of [typeof sessionStorage !== 'undefined' ? sessionStorage : null, typeof localStorage !== 'undefined' ? localStorage : null]) {
+    if (!store) continue;
+    const token = store.getItem('consenzo_token');
+    if (!token) continue;
+    try {
+      const payloadPart = token.split('.')[1];
+      if (!payloadPart) continue;
+      const json = atob(payloadPart.replace(/-/g, '+').replace(/_/g, '/'));
+      return JSON.parse(json);
+    } catch {}
+  }
+  return null;
+}
+
 export const api = {
   // 1. Create Decision Room
   async createGroup(params: {
@@ -405,7 +477,9 @@ export const api = {
     return request(`/groups/${groupId}`);
   },
 
-  // 4. Start 1-on-1 Private Interview
+  // 4. Start (or resume) 1-on-1 Private Interview — conversation is scoped to
+  // the caller's group, so each room gets a fresh, correctly-categorized chat
+  // and returning members get their prior transcript back.
   async startConversation(params: {
     participantId: string;
     category?: string;
@@ -416,6 +490,8 @@ export const api = {
     initialMessage: string;
     category?: string;
     roomTitle?: string;
+    isResume?: boolean;
+    messages?: Array<{ role: 'user' | 'assistant'; content: string; timestamp: string }>;
     thinking?: string;
     thinkingSteps?: string[];
   }> {
@@ -465,6 +541,35 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(params)
     });
+  },
+
+  // 4b. Fetch existing conversation transcript (per group) for UI resume
+  async getConversation(conversationId: string): Promise<{
+    conversationId: string;
+    participantId: string;
+    groupId: string;
+    category: string;
+    roomTitle?: string;
+    messages: Array<{ role: 'user' | 'assistant'; content: string; timestamp: string }>;
+    turnCount: number;
+  }> {
+    return request(`/conversations/${conversationId}`);
+  },
+
+  // 4c. Group feed events — the WhatsApp-style activity log for the room
+  async getGroupEvents(groupId: string, since?: number): Promise<Array<{
+    id: string;
+    type: string;
+    actorId: string;
+    text: string;
+    meta?: Record<string, any>;
+    timestamp: string;
+  }>> {
+    const query = since ? `?since=${since}` : '';
+    const res = await request<{ groupId: string; events: Array<{
+      id: string; type: string; actorId: string; text: string; meta?: Record<string, any>; timestamp: string;
+    }> }>(`/groups/${groupId}/events${query}`);
+    return res.events || [];
   },
 
   // 5. Send Message in Private Interview
@@ -558,6 +663,37 @@ export const api = {
     return request(`/participants/${participantId}/preferences`);
   },
 
+  // 6b. Update & Edit Structured Preferences
+  async updatePreferences(participantId: string, data: {
+    constraints: CanonicalConstraint[];
+    summaryMarkdown?: string;
+    confirmed?: boolean;
+  }): Promise<{
+    participantId: string;
+    confirmed: boolean;
+    summaryMarkdown: string;
+    constraints: CanonicalConstraint[];
+  }> {
+    if (FORCE_MOCK) {
+      await new Promise(r => setTimeout(r, 200));
+      const existing = mockStore.preferences.get(participantId);
+      const updated = {
+        participantId,
+        confirmed: data.confirmed !== undefined ? data.confirmed : (existing?.confirmed ?? false),
+        summaryMarkdown: data.summaryMarkdown || existing?.summaryMarkdown || '',
+        constraints: data.constraints,
+        lockedAt: existing?.lockedAt,
+      };
+      mockStore.preferences.set(participantId, updated);
+      return updated;
+    }
+
+    return request(`/participants/${participantId}/preferences`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
   // 7. Confirm & Lock Preference Profile
   async confirmPreferences(participantId: string): Promise<{
     participantId: string;
@@ -597,8 +733,21 @@ export const api = {
     });
   },
 
+  // 8a. Fetch the persisted group analysis — every member reads the SAME board
+  async getStoredAnalysis(groupId: string): Promise<GroupAnalysisResult | null> {
+    try {
+      return await request<GroupAnalysisResult>(`/groups/${groupId}/analysis`);
+    } catch {
+      return null; // 404 = not computed yet
+    }
+  },
+
   // 8. Execute Deterministic Group Consensus Analysis
-  async getAnalysis(groupId: string): Promise<GroupAnalysisResult> {
+  async getAnalysis(
+    groupId: string,
+    strategy: 'HYBRID' | 'NASH' | 'LEAST_MISERY' | 'BORDA' | 'NEURAL_ATTENTION' = 'HYBRID',
+    options?: { allowPartial?: boolean }
+  ): Promise<GroupAnalysisResult> {
     if (FORCE_MOCK) {
       await new Promise(r => setTimeout(r, 1200));
 
@@ -829,6 +978,7 @@ export const api = {
 
     return request(`/groups/${groupId}/analysis`, {
       method: 'POST',
+      body: JSON.stringify({ strategy, allowPartial: options?.allowPartial }),
       headers: {
         'Idempotency-Key': generateId('idemp')
       }

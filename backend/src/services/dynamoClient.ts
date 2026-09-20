@@ -74,6 +74,14 @@ export class LocalDynamoStore {
       return {};
     }
 
+    if (name === 'DeleteCommand' || name === 'DeleteItemCommand') {
+      const key = input.Key;
+      if (key && key.PK && key.SK) {
+        this.items.delete(`${key.PK}#${key.SK}`);
+      }
+      return {};
+    }
+
     if (name === 'ScanCommand' || name === 'Scan') {
       const all = Array.from(this.items.values()).map(i => ({ ...i }));
       return { Items: all, Count: all.length };

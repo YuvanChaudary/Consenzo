@@ -134,14 +134,14 @@ npm install
 npm run dev
 ```
 * **Frontend**: `http://localhost:5173`
-* **Backend API**: `http://localhost:3000`
+* **Backend API**: `http://localhost:3001` (health check: `http://localhost:3001/health`)
 
 ### 3. Run with Docker Compose
 ```bash
 docker compose up --build
 ```
 
-For complete deployment and configuration instructions, see [SETUP.md](SETUP.md).
+For complete deployment and configuration instructions, see [SETUP.md](SETUP.md) and the [AWS Deployment Runbook](docs/98_AWS_DEPLOYMENT_GUIDE.md).
 
 ---
 

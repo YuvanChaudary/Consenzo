@@ -1,0 +1,79 @@
+{
+  "categoryId": "chairs",
+  "displayName": "Ergonomic Chairs & Desks",
+  "description": "Ergonomic office seating, lumbar support mesh chairs and adjustable standing desks",
+  "icon": "Armchair",
+  "specDefinitions": [
+    {
+      "key": "priceInr",
+      "label": "Price (INR)",
+      "type": "currency",
+      "unit": "INR",
+      "min": 4000,
+      "max": 120000,
+      "filterable": true,
+      "sortable": true,
+      "displayGroup": "Pricing",
+      "weight": 1.0,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "material",
+      "label": "Backrest Material",
+      "type": "categorical",
+      "options": ["Breathable Mesh", "Top-Grain Leather", "Fabric Foam", "Faux Leather"],
+      "filterable": true,
+      "sortable": false,
+      "displayGroup": "Material & Comfort",
+      "weight": 0.8,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "hasLumbarSupport",
+      "label": "Adjustable Lumbar Support",
+      "type": "boolean",
+      "filterable": true,
+      "sortable": false,
+      "displayGroup": "Ergonomics",
+      "weight": 0.9,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "reclineAngleDegrees",
+      "label": "Max Recline Angle",
+      "type": "numeric",
+      "unit": "deg",
+      "min": 105,
+      "max": 165,
+      "filterable": true,
+      "sortable": true,
+      "displayGroup": "Ergonomics",
+      "weight": 0.7,
+      "hardConstraintEligible": false
+    },
+    {
+      "key": "armrestType",
+      "label": "Armrest Adjustment",
+      "type": "categorical",
+      "options": ["4D Adjustable", "3D Adjustable", "2D Adjustable", "Fixed"],
+      "filterable": true,
+      "sortable": false,
+      "displayGroup": "Ergonomics",
+      "weight": 0.75,
+      "hardConstraintEligible": true
+    },
+    {
+      "key": "maxWeightCapacityKg",
+      "label": "Weight Capacity",
+      "type": "numeric",
+      "unit": "kg",
+      "min": 90,
+      "max": 180,
+      "filterable": true,
+      "sortable": true,
+      "displayGroup": "Build Quality",
+      "weight": 0.8,
+      "hardConstraintEligible": true
+    }
+  ]
+}
