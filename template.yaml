@@ -124,7 +124,7 @@ Resources:
       FunctionName: !Sub "consenzo-backend-handler-${Stage}"
       CodeUri: ./backend/
       Handler: dist/backend/src/index.handler
-      Runtime: nodejs20.x
+      Runtime: nodejs22.x
       Environment:
         Variables:
           NODE_ENV: production

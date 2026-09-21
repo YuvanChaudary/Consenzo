@@ -19,7 +19,7 @@
 [![NVIDIA AI](https://img.shields.io/badge/NVIDIA-Nemotron--3.5--30B-76B900?style=for-the-badge&logo=nvidia&logoColor=white)](https://build.nvidia.com)
 [![Amazon DynamoDB](https://img.shields.io/badge/DynamoDB-Single--Table%20Design-4053D6?style=for-the-badge&logo=amazon-dynamodb&logoColor=white)](https://aws.amazon.com/dynamodb/)
 [![React 18](https://img.shields.io/badge/React%2018-TypeScript%20SPA-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-20.x%20Runtime-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-22.x%20Runtime-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
 <br/>
@@ -107,7 +107,7 @@ flowchart TD
     end
 
     subgraph Compute["⚙️ Compute & Business Logic Tier"]
-        Lambda["λ AWS Lambda (Node.js 20.x Monolith Router)<br/>512MB RAM • Sub-50ms Execution"]
+        Lambda["λ AWS Lambda (Node.js 22.x Monolith Router)<br/>512MB RAM • Sub-50ms Execution"]
         APIGW -->|3. Payload Forwarding| Lambda
         
         subgraph InternalModules["Lambda Modular Engines"]
@@ -246,7 +246,7 @@ Consenzo ships with a vetted catalog of **150+ Amazon products** with rich param
 | AWS Service | Configuration & Sizing | Purpose & Architectural Role |
 | :--- | :--- | :--- |
 | **Amazon API Gateway** | HTTP API (v2), `$default` stage, automated CORS | Secure, ultra-low latency REST gateway with sub-15ms overhead |
-| **AWS Lambda** | Node.js 20.x, 512 MB memory, 30s timeout | Monolithic REST router executing auth, chat orchestration, and math engines |
+| **AWS Lambda** | Node.js 22.x, 512 MB memory, 30s timeout | Monolithic REST router executing auth, chat orchestration, and math engines |
 | **Amazon DynamoDB** | Single-Table (`consenzo-core-dev`), Pay-Per-Request | Point-in-time recovery, continuous encryption, composite key indexing |
 | **Amazon S3** | Static Website Hosting bucket with public read policy | CDN-grade hosting for React 18 production bundle |
 | **AWS Secrets Manager** | `consenzo/nvidia-api-key` secret with IAM least-privilege | Dynamic runtime injection of LLM API keys with zero plaintext code exposure |
